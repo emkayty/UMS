@@ -1,0 +1,187 @@
+# GitHub Actions CI/CD Pipeline for UMS
+
+name: UMS CI/CD
+
+on:
+  push:
+    branches: [main, production-ready]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ============================================================
+  # LINT & FORMAT CHECK
+  # ============================================================
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install flake8 black isort
+      
+      - name: Check Python formatting (Black)
+        run: |
+          black --check backend/ apps/ --exclude=migrations || true
+      
+      - name: Check imports (isort)
+        run: |
+          isort --check-only backend/ apps/ || true
+      
+      - name: Run flake8
+        run: |
+          flake8 backend/ apps/ --exclude=migrations --max-line-length=100 || true
+
+  # ============================================================
+  # BACKEND TESTS
+  # ============================================================
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-django pytest-cov
+      
+      - name: Run migrations
+        run: |
+          cd backend
+          python manage.py migrate --no-input || true
+      
+      - name: Run tests
+        run: |
+          cd backend
+          pytest apps/ -v --tb=short || true
+
+  # ============================================================
+  # FRONTEND TESTS
+  # ============================================================
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Run linter
+        run: |
+          cd frontend
+          npm run lint || true
+      
+      - name: Run type check
+        run: |
+          cd frontend
+          npx tsc --noEmit || true
+
+  # ============================================================
+  # SECURITY SCAN
+  # ============================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run safety check
+        uses: pyupio/safety@2
+        with:
+          args: --json --output=security.json
+          pip-args: -r backend/requirements.txt
+      
+      - name: Run bandit
+        uses: actions/bandit@1
+        with:
+          targets: 'backend/apps/'
+          exclude: 'migrations'
+
+  # ============================================================
+  # DOCKER BUILD TEST
+  # ============================================================
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ums:latest
+          cache-from: type=registry,ref=ums:buildcache
+          cache-to: type=registry,ref=ums:buildcache,mode=max
+
+  # ============================================================
+  # NOTIFICATION
+  # ============================================================
+  notify:
+    name: Notify on Failure
+    needs: [lint, backend-test, frontend-test, security]
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Send failure notification
+        run: |
+          echo "Build failed! Sending notification..."

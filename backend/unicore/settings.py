@@ -185,7 +185,39 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    'EXCEPTION_HANDLER': 'unicore.exception_handler.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'unicore.exceptions.custom_exception_handler',
+}
+
+# OpenAPI / Swagger Configuration (drf-spectacular)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'UMS API',
+    'DESCRIPTION': '''
+University Management System REST API
+
+## Features
+- Authentication (JWT)
+- Academic Management
+- Student Management
+- Staff Management
+- Finance & Fees
+- Learning & Exams
+- AI/ML Services
+- Analytics
+
+## Authentication
+Use JWT token in Authorization header:
+```
+Authorization: Bearer <token>
+```
+''',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'Login, logout'},
+        {'name': 'Academic', 'description': 'Faculties, departments'},
+        {'name': 'Students', 'description': 'Students'},
+        {'name': 'Finance', 'description': 'Fees, payments'},
+    ]
 }
 
 # CORS
