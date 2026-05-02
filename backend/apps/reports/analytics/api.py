@@ -61,50 +61,48 @@ def get_student_risk_score(request, student_id: str):
             'intervention_recommended': []
         }
     
-    score = StudentRiskScore.objects.filter(student=student).order_by('-predicted_at').first()
+    # Use ML service for prediction
+    from apps.reports.ml_service import StudentRiskPredictor
     
-    if not score:
-        # Calculate real risk based on student's academic record
-        from apps.student.results import Result, CGPAHistory
-        from apps.finance.models import StudentFee
-        
-        # Get student's GPA
-        cgpa = CGPAHistory.objects.filter(student=student).order_by('-created_at').first()
-        gpa = float(cgpa.cumulative_gpa) if cgpa else 0
-        
-        # Calculate outstanding fees
-        fees = StudentFee.objects.filter(student=student)
-        outstanding = sum(float(f.amount_due - f.amount_paid) for f in fees)
-        
-        # Determine risk level based on real data
-        dropout_risk = 0.3 if gpa < 1.5 else (0.2 if gpa < 2.0 else 0.1)
-        financial_risk = 0.5 if outstanding > 50000 else 0.2
-        
-        if gpa < 1.5:
-            risk_level = 'high'
-        elif gpa < 2.0:
-            risk_level = 'medium'
-        else:
-            risk_level = 'low'
-        
-        return {
-            'student_id': student_id,
-            'risk_level': risk_level,
-            'dropout_risk': dropout_risk,
-            'academic_probation_risk': dropout_risk * 0.8,
-            'financial_risk': financial_risk,
-            'factors': {'gpa': gpa, 'outstanding': outstanding},
-            'intervention_recommended': ['Academic counseling'] if gpa < 2.0 else []
-        }
+    prediction = StudentRiskPredictor.predict_risk(student)
+    
+    # Build risk scores based on ML prediction
+    dropout_risk = prediction['dropout_risk']
+    academic_risk = dropout_risk * 0.8
+    
+    # Calculate financial risk
+    from apps.finance.models import StudentFee
+    fees = StudentFee.objects.filter(student=student)
+    outstanding = sum(float(f.amount_due - f.amount_paid) for f in fees)
+    financial_risk = 0.5 if outstanding > 50000 else 0.2 if outstanding > 10000 else 0
+    
+    # Determine risk level
+    if dropout_risk > 0.6 or financial_risk > 0.4:
+        risk_level = 'high'
+    elif dropout_risk > 0.3 or financial_risk > 0.2:
+        risk_level = 'medium'
+    else:
+        risk_level = 'low'
+    
+    # Build factors and interventions
+    factors = {'gpa': prediction.get('confidence', 0.85)}
+    if outstanding > 0:
+        factors['outstanding_fees'] = outstanding
+    
+    interventions = []
+    if risk_level == 'high':
+        interventions = ['Academic counseling', 'Financial aid review']
+    elif risk_level == 'medium':
+        interventions = ['Academic warning']
     
     return {
         'student_id': student_id,
-        'risk_level': score.risk_level,
-        'dropout_risk': float(score.dropout_risk),
-        'academic_probation_risk': float(score.academic_probation_risk),
-        'financial_risk': float(score.financial_risk),
-        'factors': score.factors,
-        'intervention_recommended': score.intervention_recommended
+        'risk_level': risk_level,
+        'dropout_risk': dropout_risk,
+        'academic_probation_risk': academic_risk,
+        'financial_risk': financial_risk,
+        'factors': factors,
+        'intervention_recommended': interventions
     }
 
 
@@ -114,35 +112,28 @@ def get_grade_predictions(request, student_id: str):
     from apps.reports.analytics.models import SmartGradePrediction
     from apps.student.models import CourseRegistration
     
+    # Use ML service
+    from apps.reports.ml_service import GradePredictor
+    
     # Get student's current registrations
-    regs = CourseRegistration.objects.filter(
-        student_id=student_id, status='active'
-    )
+    try:
+        regs = CourseRegistration.objects.filter(
+            student_id=student_id, status='active'
+        )
+    except:
+        return []
     
     predictions = []
     for reg in regs:
-        pred = SmartGradePrediction.objects.filter(
-            student_id=student_id,
-            course=reg.course,
-            session=reg.session
-        ).first()
+        pred = GradePredictor.predict(reg.student, reg.course)
         
-        if pred:
-            predictions.append({
-                'course': reg.course.code,
-                'title': reg.course.title,
-                'predicted_score': float(pred.predicted_score),
-                'confidence': pred.confidence_interval,
-                'what_if': pred.score_needed_for_grade
-            })
-        else:
-            predictions.append({
-                'course': reg.course.code,
-                'title': reg.course.title,
-                'predicted_score': None,
-                'confidence': None,
-                'what_if': {'A': 85, 'B': 75, 'C': 65, 'D': 55}
-            })
+        predictions.append({
+            'course': reg.course.code,
+            'title': reg.course.title,
+            'predicted_score': pred['predicted_score'],
+            'confidence_interval': pred['confidence_interval'],
+            'score_needed': pred['score_needed']
+        })
     
     return predictions
 

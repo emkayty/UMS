@@ -146,6 +146,38 @@ def send_message(request, data: dict):
     return {'success': True}
 
 
+# === AI Chatbot ===
+@router.post('/ai/chat')
+def ai_chat(request, data: dict):
+    """AI-powered chatbot."""
+    message = data.get('message', '')
+    session_id = data.get('session_id')
+    
+    if not message:
+        return {'error': 'Message required'}
+    
+    # Use AI service
+    from apps.communication.ai_service import ChatbotService
+    
+    result = ChatbotService.chat(message)
+    
+    return {
+        'message': result['message'],
+        'model': result.get('model', 'unknown'),
+        'fallback': result.get('fallback', False)
+    }
+
+
+@router.get('/ai/search')
+def ai_search(request, q: str):
+    """Smart search."""
+    from apps.communication.ai_service import SmartSearchService
+    
+    results = SmartSearchService.search(q)
+    
+    return {'results': results, 'query': q}
+
+
 # === Broadcast ===
 @router.post('/broadcast')
 def broadcast_message(request, data: dict):
