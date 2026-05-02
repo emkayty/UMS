@@ -70,6 +70,9 @@ api.add_router('/academic/', additional_router)
 # Core unified
 api.add_router('/core/', core_router)
 
+# Enterprise
+api.add_router('/enterprise/', enterprise_router)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', api.urls),
@@ -98,4 +101,7 @@ urlpatterns += [
 ]
 
 from apps.core.api import router as core_router
+
+
+from apps.core.enterprise_api import router as enterprise_router
 
