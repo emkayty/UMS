@@ -268,3 +268,255 @@ export interface DashboardStats {
     student_fees: number
   }
 }
+
+// ============================================================
+// ADDITIONAL TYPES
+// ============================================================
+
+// Library Types
+export interface Book {
+  id: string
+  isbn: string
+  title: string
+  author: string
+  publisher: string
+  year: number
+  category: 'textbook' | 'reference' | 'journal'
+  total_copies: number
+  available_copies: number
+}
+
+export interface BookLoan {
+  id: string
+  book: Book
+  student: Student
+  borrowed_at: string
+  due_date: string
+  returned_at?: string
+  status: 'borrowed' | 'returned' | 'overdue'
+}
+
+// Venue Types
+export interface Venue {
+  id: string
+  name: string
+  code: string
+  venue_type: string
+  seating_capacity: number
+  building: string
+}
+
+// Timetable Types
+export interface TimetableSlot {
+  id: string
+  course: Course
+  venue?: Venue
+  day: string
+  start_time: string
+  end_time: string
+}
+
+// Exam Types
+export interface ExamSitting {
+  id: string
+  exam: Exam
+  venue: Venue
+  date: string
+  start_time: string
+  end_time: string
+  seat_number?: string
+  is_published: boolean
+}
+
+export interface Exam {
+  id: string
+  course: Course
+  title: string
+  exam_type: 'test' | 'quiz' | 'midterm' | 'final'
+  date: string
+  start_time: string
+  duration_minutes: number
+}
+
+// Invigilation
+export interface Invigilation {
+  id: string
+  exam: Exam
+  venue: Venue
+  invigilator: StaffProfile
+  is_principal: boolean
+  status: 'assigned' | 'completed'
+}
+
+// Disciplinary Types
+export interface DisciplinaryCase {
+  id: string
+  student: Student
+  incident_date: string
+  category: string
+  description: string
+  status: 'reported' | 'investigating' | 'decided' | 'closed'
+  created_at: string
+}
+
+export interface DisciplinaryHearing {
+  id: string
+  case: DisciplinaryCase
+  hearing_date: string
+  venue: string
+  decision?: string
+}
+
+// ICT Types
+export interface ITAsset {
+  id: string
+  asset_tag: string
+  name: string
+  asset_type: string
+  serial_number?: string
+  status: 'available' | 'in_use' | 'maintenance'
+  assigned_to?: User
+}
+
+export interface ITSupportTicket {
+  id: string
+  title: string
+  description: string
+  category: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  created_at: string
+}
+
+// Sports Types
+export interface SportsTeam {
+  id: string
+  name: string
+  sport: string
+  coach?: StaffProfile
+  captain?: Student
+  status: 'active' | 'inactive'
+}
+
+export interface SportsFacility {
+  id: string
+  name: string
+  type: string
+  capacity: number
+}
+
+// Awards Types
+export interface StudentAward {
+  id: string
+  name: string
+  award_type: string
+  amount: number
+  criteria?: string
+}
+
+export interface AwardRecipient {
+  id: string
+  award: StudentAward
+  student: Student
+  amount: number
+  status: 'pending' | 'approved' | 'disbursed'
+}
+
+// Enterprise Types
+export interface CustomField {
+  id: string
+  name: string
+  field_type: string
+  model: string
+  required: boolean
+  options?: string[]
+}
+
+export interface Webhook {
+  id: string
+  name: string
+  url: string
+  events: string[]
+  is_active: boolean
+}
+
+export interface APIKey {
+  id: string
+  name: string
+  key: string
+  is_active: boolean
+  last_used?: string
+}
+
+// Notification Types
+export interface NotificationTemplate {
+  id: string
+  name: string
+  channel: 'email' | 'sms' | 'push'
+  subject?: string
+  body: string
+}
+
+// ============================================================
+// FORM TYPES
+// ============================================================
+
+export interface LoginForm {
+  email: string
+  password: string
+}
+
+export interface RegisterForm {
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  password: string
+  confirm_password: string
+}
+
+export interface ProfileForm {
+  first_name: string
+  last_name: string
+  phone: string
+  date_of_birth?: string
+  address?: string
+  state?: string
+}
+
+export interface CourseRegistrationForm {
+  courses: string[]
+}
+
+export interface PaymentForm {
+  amount: number
+  gateway: string
+}
+
+export interface TicketForm {
+  title: string
+  description: string
+  category: string
+  priority: string
+}
+
+// ============================================================
+// OPTIONS TYPES
+// ============================================================
+
+export interface SelectOption {
+  value: string
+  label: string
+}
+
+export interface TableColumn {
+  key: string
+  label: string
+  sortable?: boolean
+  render?: (value: any, row: any) => React.ReactNode
+}
+
+export interface TableConfig {
+  columns: TableColumn[]
+  dataKey: string
+}
