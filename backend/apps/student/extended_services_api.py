@@ -7,6 +7,7 @@ from ninja import Router, Schema
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db import models
 import uuid
 
 router = Router(tags=['Services'])

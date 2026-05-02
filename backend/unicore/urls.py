@@ -24,6 +24,11 @@ from apps.reports.analytics.api import router as analytics_router
 from apps.offline.api import router as offline_router
 from apps.lifecycle.api import router as lifecycle_router
 
+# New routers (v2)
+from apps.student.attendance_api import router as attendance_router
+from apps.student.workflow_api import router as workflow_router
+from apps.student.extended_services_api import router as services_router
+
 api = NinjaAPI(title='UniCore API', version='1.0.0')
 
 # Add all route groups
@@ -40,6 +45,11 @@ api.add_router('/reports/', reports_router)
 api.add_router('/ai/', analytics_router)
 api.add_router('/offline/', offline_router)
 api.add_router('/lifecycle/', lifecycle_router)
+
+# New v2 routers
+api.add_router('/attendance/', attendance_router)
+api.add_router('/workflow/', workflow_router)
+api.add_router('/services/', services_router)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
