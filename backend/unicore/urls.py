@@ -28,6 +28,10 @@ from apps.lifecycle.api import router as lifecycle_router
 from apps.student.attendance_api import router as attendance_router
 from apps.student.workflow_api import router as workflow_router
 from apps.student.extended_services_api import router as services_router
+from apps.student.disciplinary_api import router as disciplinary_router
+
+# Learning routers
+from apps.learning.library_exam_api import router as library_exam_router
 
 api = NinjaAPI(title='UniCore API', version='1.0.0')
 
@@ -50,6 +54,10 @@ api.add_router('/lifecycle/', lifecycle_router)
 api.add_router('/attendance/', attendance_router)
 api.add_router('/workflow/', workflow_router)
 api.add_router('/services/', services_router)
+api.add_router('/disciplinary/', disciplinary_router)
+
+# Learning v2
+api.add_router('/library/', library_exam_router)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
