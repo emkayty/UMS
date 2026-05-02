@@ -32,6 +32,7 @@ from apps.student.disciplinary_api import router as disciplinary_router
 
 # Learning routers
 from apps.learning.library_exam_api import router as library_exam_router
+from apps.institution.services_api import router as services_router
 
 api = NinjaAPI(title='UniCore API', version='1.0.0')
 
@@ -58,6 +59,9 @@ api.add_router('/disciplinary/', disciplinary_router)
 
 # Learning v2
 api.add_router('/library/', library_exam_router)
+
+# Institution
+api.add_router('/ict/', services_router)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
