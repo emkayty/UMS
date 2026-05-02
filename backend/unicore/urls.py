@@ -67,6 +67,9 @@ api.add_router('/ict/', services_router)
 # Additional
 api.add_router('/academic/', additional_router)
 
+# Core unified
+api.add_router('/core/', core_router)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', api.urls),
@@ -93,3 +96,6 @@ urlpatterns += [
         '<pre>Health: <a href="/api/v1/health/">/api/v1/health/</a></pre>'
     )),
 ]
+
+from apps.core.api import router as core_router
+
