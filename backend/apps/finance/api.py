@@ -97,8 +97,6 @@ def create_fee_item(request, data: FeeItemCreateSchema):
     """Create fee item (bursar only)."""
     # Validate amount
     if data.amount <= 0:
-        # from rest_framework.response import Response
-        # from rest_framework import status
         return Response({'error': 'Amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
     
     fee = FeeItem.objects.create(
