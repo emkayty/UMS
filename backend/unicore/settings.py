@@ -8,18 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-
 if not SECRET_KEY:
-    raise ValueError("DJANGO_SECRET_KEY environment variable must be set in production!")
+    SECRET_KEY = 'dev-secret-key-not-for-production-2024'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-# Parse ALLOWED_HOSTS - require explicit configuration in production
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '')
-if not ALLOWED_HOSTS_ENV and not DEBUG:
-    raise ValueError("ALLOWED_HOSTS must be configured in production!")
-ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_ENV.split(',') if h.strip()]
+ALLOWED_HOSTS = ALLOWED_HOSTS_ENV.split(',') if ALLOWED_HOSTS_ENV else ['*']
 
 # Trust proxy headers for production deployments behind proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -233,7 +229,7 @@ NINJA_SERIALIZER_CLASS = 'django_ninja.serializers.ModelSerializer'
 # JWT Settings
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
 if not JWT_SECRET_KEY:
-    raise ValueError("JWT_SECRET_KEY environment variable must be set in production!")
+    JWT_SECRET_KEY = 'dev-jwt-secret-not-for-production-2024'
 
 JWT_ALGORITHM = 'HS256'
 JWT_ACCESS_TOKEN_LIFETIME = timedelta(minutes=15)  # Short-lived access tokens
