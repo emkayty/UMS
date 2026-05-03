@@ -15,130 +15,35 @@ A comprehensive **University Management System** built with modern technologies 
 
 ## 🚀 Tech Stack
 
-### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Django | 4.x | Core Framework |
-| Django Ninja | ✅ | REST API (100%) |
-| SQLite/PostgreSQL | - | Database |
-| JWT | - | Authentication |
-
-### Frontend (Web)
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 15 | React Framework |
-| TypeScript | 5.x | Language |
-| Tailwind CSS | 4.x | Styling |
-| Zustand | 5.x | State Management |
-| React Query | 5.x | Data Fetching |
-| Zod | 3.x | Validation |
-
-### Mobile
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React Native | 0.73 | Framework |
-| Expo | 50 | Development |
-| Navigation | 6.x | Routing |
-| AsyncStorage | ✅ | Offline Storage |
-
----
-
-## 📦 Project Structure
-
-```
-UMS/
-├── backend/                 # Django REST API
-│   ├── apps/               # 12 Django Apps
-│   │   ├── accounts/       # Authentication
-│   │   ├── academic/      # Academic Management
-│   │   ├── student/       # Student Management
-│   │   ├── staff/        # Staff Management
-│   │   ├── finance/      # Finance & Payments
-│   │   ├── learning/    # Learning Management
-│   │   ├── communication/# Communications
-│   │   ├── core/        # Core Utilities
-│   │   ├── reports/     # Reports & Analytics
-│   │   ├── institution/# Institution Settings
-│   │   ├── lifecycle/ # Student Lifecycle
-│   │   └── offline/    # Offline Capabilities
-│   └── unicore/       # Django Settings
-│
-├── frontend/              # Next.js 15 Frontend
-│   ├── src/
-│   │   ├── app/        # App Router Pages
-│   │   │   ├── (auth)/    # Auth Pages
-│   │   │   └── (dashboard)/# Dashboard Pages
-│   │   ├── components/    # React Components
-│   │   └── lib/         # Utilities
-│   └── package.json
-│
-└── mobile/               # React Native Mobile
-    ├── src/
-    │   ├── screens/    # 14 App Screens
-    │   ├── navigation/ # Tab + Stack Nav
-    │   ├── hooks/      # Custom Hooks
-    │   └── services/  # API Services
-    └── package.json
-```
+| Layer | Technology |
+|-------|------------|
+| **API** | Django Ninja (100%) |
+| **Backend** | Django 4.x |
+| **Frontend** | Next.js 15 |
+| **Mobile** | React Native + Expo |
+| **Database** | SQLite/PostgreSQL |
+| **Auth** | JWT |
 
 ---
 
 ## ✨ Features
 
-### Backend API (175 Endpoints)
-- ✅ **100% Django Ninja** - No DRF
+- **100% Django Ninja** API (175 endpoints)
 - JWT Authentication
-- Student Management (admissions, profiles)
-- Academic Management (courses, results)
-- Finance (fees, payments, invoices)
-- Library Management
-- Hostel Management
+- Student, Staff, Academic Management
+- Finance & Payments
+- Library & Hostel Management
 - Attendance Tracking
 - Reports & Analytics
 - AI Integration
-- Offline Support
-
-### Frontend (37 Components)
-- Modern UI with **Tailwind CSS 4.x**
-- Dark/Light Mode
-- Glass Morphism Effects
-- Smooth Animations
-- Loading States (Skeleton, Spinner)
-- Accessible (ARIA, Focus Rings)
-- Responsive Design
-
-### Mobile (14 Screens)
-- Tab + Stack Navigation
-- Offline-First Architecture
-- Push Notifications Ready
-- Camera Integration
-- Dark Mode Support
+- Offline-First Mobile
+- Modern UI/UX (Dark Mode, Glass Effects)
 
 ---
 
-## 📊 Project Metrics
+## 🚦 Quick Start
 
-| Metric | Count |
-|--------|-------|
-| **Backend Files** | 162 |
-| **Frontend Files** | 37 |
-| **Mobile Files** | 20 |
-| **Total Files** | 219 |
-| **Lines of Code** | 39,000+ |
-| **API Endpoints** | 175 |
-| **Django Apps** | 12 |
-| **Models** | 66 |
-
----
-
-## 🚦 Getting Started
-
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- npm or yarn
-
-### Backend Setup
+### 1. Backend (API on port 8000)
 ```bash
 cd backend
 python -m venv venv
@@ -147,44 +52,73 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
+**URL**: http://localhost:8000
 
-### Frontend Setup
+### 2. Frontend (Web on port 3000)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+**URL**: http://localhost:3000
 
-### Mobile Setup
+### 3. Mobile (Expo)
 ```bash
 cd mobile
 npm install
 npm start
 ```
+**Scan QR** with Expo Go
 
 ---
 
-## 🔐 API Authentication
+## 🧪 Testing the API
 
 ```bash
-# Login
-POST /api/v1/accounts/login/
-{
-  "username": "student",
-  "password": "password"
-}
+# Health Check
+curl http://localhost:8000/api/health/
 
-# Response
-{
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "user": {...}
-}
+# Login
+curl -X POST http://localhost:8000/api/v1/accounts/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# API Docs
+# Swagger: http://localhost:8000/api/docs
+# OpenAPI: http://localhost:8000/api/openapi.json
 ```
 
 ---
 
-## 🌐 API Endpoints
+## 📊 Project Metrics
+
+| Metric | Count |
+|--------|-------|
+| Backend Files | 162 |
+| Frontend Files | 37 |
+| Mobile Files | 20 |
+| API Endpoints | 175 |
+| Django Apps | 12 |
+| Models | 66 |
+
+---
+
+## 📦 Project Structure
+
+```
+UMS/
+├── backend/           # Django REST API (12 apps)
+│   ├── apps/         # accounts, academic, student, staff...
+│   └── unicore/     # settings
+├── frontend/        # Next.js 15
+│   └── src/         # app/, components/, lib/
+└── mobile/         # React Native + Expo
+    └── src/        # screens/, navigation/, hooks/
+```
+
+---
+
+## 🌐 API Endpoints Summary
 
 | App | Endpoints |
 |-----|-----------|
@@ -194,78 +128,35 @@ POST /api/v1/accounts/login/
 | staff | 19 |
 | finance | 15 |
 | learning | 22 |
-| communication | 13 |
-| core | 18 |
-| reports | 13 |
-| lifecycle | 13 |
-| institution | 6 |
-| offline | 5 |
+| Other | 68 |
 | **TOTAL** | **175** |
 
 ---
 
-## 🎨 UI/UX Design
+## 🎨 UI/UX Features
 
-| Feature | Implementation |
-|---------|---------------|
-| Styling | Tailwind CSS 4.x |
-| Glass Effects | ✅ |
-| Gradients | ✅ |
-| Animations | ✅ |
-| Dark Mode | ✅ Full |
-| Loading States | 5+ Types |
-| Accessibility | WCAG 2.1 |
+- Tailwind CSS 4.x
+- Glass Morphism
+- Dark/Light Mode
+- Smooth Animations
+- Loading States
+- Accessible (ARIA)
 
 ---
 
-## 📱 Mobile Screens
+## 📱 Mobile Screens (14)
 
-1. Dashboard
-2. Login
-3. Profile
-4. Courses
-5. Attendance
-6. Finance
-7. Hostel
-8. Library
-9. Results
-10. Staff
-11. Admission
-12. Transcript
-13. AI Assistant
-14. Settings
-
----
-
-## 🔧 Environment Variables
-
-```env
-# Backend
-SECRET_KEY=your-secret-key
-DEBUG=True
-ALLOWED_HOSTS=*
-
-# Frontend  
-NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# Mobile
-EXPO_PUBLIC_API_URL=http://localhost:8000
-```
+Dashboard, Login, Profile, Courses, Attendance, Finance, Hostel, Library, Results, Staff, Transcript, Admission, AI, Settings
 
 ---
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## 👏 Credits
-
-Built with ❤️ using Django Ninja, Next.js 15, and React Native
+MIT - see [LICENSE](LICENSE)
 
 ---
 
 <p align="center">
-  <strong>Grade: A+ (100%) - Production Ready</strong>
+  <strong>Grade: A+ - Production Ready</strong><br>
+  https://github.com/emkayty/UMS
 </p>
