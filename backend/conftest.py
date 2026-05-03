@@ -134,7 +134,7 @@ def student_profile(db, user, programme):
 def staff_profile(db, user, department):
     """Create a test staff profile."""
     from apps.staff.models import StaffProfile
-    fromapps.staff.models import StaffProfile.objects.create(
+    return StaffProfile.objects.create(
         user=user,
         staff_id='STF001',
         department=department,

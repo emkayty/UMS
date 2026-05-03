@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'apps.learning',
     'apps.finance',
     'apps.communication',
+    'apps.core',
     'apps.reports',
     'apps.reports.analytics',
     'apps.offline',
