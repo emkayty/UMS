@@ -10,7 +10,9 @@ from apps.academic.models import Department, Faculty
 # ============================================================
 
 class StaffRank(models.TextChoices):
-    # Academic Staff Ranks (Universities)
+    # ============================================================
+    # NIGERIAN ACADEMIC RANKS (Universities)
+    # ============================================================
     LECTURER_III = 'lecturer_iii', 'Lecturer III'
     LECTURER_II = 'lecturer_ii', 'Lecturer II'
     LECTURER_I = 'lecturer_i', 'Lecturer I'
@@ -18,13 +20,17 @@ class StaffRank(models.TextChoices):
     READER = 'reader', 'Reader (Associate Professor)'
     PROFESSOR = 'professor', 'Professor'
     
-    # Polytechnic Academic Ranks
+    # ============================================================
+    # NIGERIAN POLYTECHNIC RANKS
+    # ============================================================
     CHIEF_LECTURER = 'chief_lecturer', 'Chief Lecturer'
     PRINCIPAL_LECTURER = 'principal_lecturer', 'Principal Lecturer'
-    SENIOR_LECTURER_P = 'senior_lecturer_p', 'Senior Lecturer (Poly)'
-    LECTURER_P = 'lecturer_p', 'Lecturer (Poly)'
+    SENIOR_LECTURER_P = 'senior_lecturer_p', 'Senior Lecturer'
+    LECTURER_P = 'lecturer_p', 'Lecturer'
     
-    # Administrative Ranks
+    # ============================================================
+    # NIGERIAN ADMINISTRATIVE RANKS
+    # ============================================================
     HOD = 'hod', 'Head of Department'
     DEAN = 'dean', 'Dean'
     REGISTRAR = 'registrar', 'Registrar'
@@ -35,6 +41,27 @@ class StaffRank(models.TextChoices):
     # Support Staff
     SENIOR_STAFF = 'senior_staff', 'Senior Staff'
     JUNIOR_STAFF = 'junior_staff', 'Junior Staff'
+    
+    # ============================================================
+    # AMERICAN ACADEMIC RANKS
+    # ============================================================
+    INSTRUCTOR = 'instructor', 'Instructor'
+    ADJUNCT_PROF = 'adjunct_prof', 'Adjunct Professor'
+    ASSISTANT_PROF = 'assistant_prof', 'Assistant Professor'
+    ASSOCIATE_PROF = 'associate_prof', 'Associate Professor'
+    FULL_PROF = 'full_prof', 'Professor'
+    ENDOWED_CHAIR = 'endowed_chair', 'Endowed Chair'
+    UNIVERSITY_PROF = 'university_prof', 'University Professor'
+    
+    # ============================================================
+    # AMERICAN ADMINISTRATIVE RANKS
+    # ============================================================
+    DEPARTMENT_CHAIR = 'dept_chair', 'Department Chair'
+    DIRECTOR = 'director', 'Director'
+    DEAN_US = 'dean_us', 'Dean'
+    PROVOST = 'provost', 'Provost'
+    PRESIDENT = 'president', 'President'
+    CHANCELLOR_US = 'chancellor_us', 'Chancellor'
 
 
 class LeaveRequestStatus(models.TextChoices):

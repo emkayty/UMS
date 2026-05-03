@@ -4,32 +4,126 @@ from apps.accounts.models import User
 
 
 # ============================================================
-# NIGERIAN UNIVERSITY PROGRAMME TYPES
+# NIGERIAN UNIVERSITY & POLYTECHNIC PROGRAMME TYPES
 # ============================================================
 
 class ProgrammeType(models.TextChoices):
-    ND = 'nd', 'National Diploma (ND)'
-    HND = 'hnd', 'Higher National Diploma (HND)'
+    # Universities (NUC)
     BSc = 'bsc', 'Bachelor of Science (BSc)'
-    BScEd = 'bsced', 'Bachelor of Education (BSc.Ed)'
     BA = 'ba', 'Bachelor of Arts (BA)'
+    BScEd = 'bsced', 'Bachelor of Education (BSc.Ed)'
     BTech = 'btch', 'Bachelor of Technology (BTech)'
     LLB = 'llb', 'Bachelor of Law (LLB)'
     MBBS = 'mbbs', 'Bachelor of Medicine (MBBS)'
+    BPharm = 'bpharm', 'Bachelor of Pharmacy'
+    BScN = 'bscn', 'Bachelor of Nursing'
     MSc = 'msc', 'Master of Science (MSc)'
     MA = 'ma', 'Master of Arts (MA)'
     MTech = 'mtech', 'Master of Technology (MTech)'
     PhD = 'phd', 'Doctor of Philosophy (PhD)'
-    PGDE = 'pgde', 'Postgraduate Diploma'
+    
+    # Polytechnics (NBTE)
+    ND = 'nd', 'National Diploma (ND)'
+    HND = 'hnd', 'Higher National Diploma (HND)'
+    PGD = 'pgd', 'Postgraduate Diploma'
+    
+    # Education
+    PGDE = 'pgde', 'Postgraduate Diploma in Education'
+    
+    # ============================================================
+    # AMERICAN UNIVERSITY DEGREE TYPES
+    # ============================================================
+    
+    # Associate Degrees (Community College)
+    AA = 'aa', 'Associate of Arts (AA)'
+    AS = 'as', 'Associate of Science (AS)'
+    AAS = 'aas', 'Associate of Applied Science (AAS)'
+    ABA = 'aba', 'Associate of Business Administration'
+    
+    # Bachelor Degrees
+    BBA = 'bba', 'Bachelor of Business Administration (BBA)'
+    BS = 'bs', 'Bachelor of Science (BS)'
+    BAL = 'bal', 'Bachelor of Arts (Liberal Arts)'
+    BE = 'be', 'Bachelor of Engineering'
+    BSN = 'bsn', 'Bachelor of Science in Nursing'
+    
+    # Master Degrees
+    MBA = 'mba', 'Master of Business Administration (MBA)'
+    MPA = 'mpa', 'Master of Public Administration'
+    MPH = 'mph', 'Master of Public Health'
+    MEd = 'med', 'Master of Education'
+    MSW = 'msw', 'Master of Social Work'
+    
+    # Doctoral Degrees
+    EdD = 'edd', 'Doctor of Education (EdD)'
+    DBA = 'dba', 'Doctor of Business Administration'
+    MD = 'md', 'Doctor of Medicine (MD)'
+    DDS = 'dds', 'Doctor of Dental Surgery'
+    PharmD = 'pharmd', 'Doctor of Pharmacy'
 
 
 class GradeLetter(models.TextChoices):
-    A = 'A', 'Excellent (70-100)'
-    B = 'B', 'Very Good (60-69)'
-    C = 'C', 'Good (50-59)'
-    D = 'D', 'Satisfactory (45-49)'
-    E = 'E', 'Pass (40-44)'
-    F = 'F', 'Fail (0-39)'
+    # ============================================================
+    # NIGERIAN GRADING SYSTEM
+    # ============================================================
+    A = 'A', 'Excellent (70-100%)'
+    B = 'B', 'Very Good (60-69%)'
+    C = 'C', 'Good (50-59%)'
+    D = 'D', 'Satisfactory (45-49%)'
+    E = 'E', 'Pass (40-44%)'
+    F = 'F', 'Fail (0-39%)'
+
+
+class GradePoint(models.TextChoices):
+    """
+    Grade Points for CGPA calculation.
+    Nigerian: A=5, B=4, C=3, D=2, E=1, F=0
+    """
+    A = 'A', '5 points'
+    B = 'B', '4 points'
+    C = 'C', '3 points'
+    D = 'D', '2 points'
+    E = 'E', '1 point'
+    F = 'F', '0 points'
+
+
+class USGradeLetter(models.TextChoices):
+    """
+    American Grading System (4.0 Scale).
+    Used by US universities and adopted by some international institutions.
+    """
+    A_PLUS = 'A+', 'A+ (97-100%) - 4.0'
+    A = 'A', 'A (93-96%) - 4.0'
+    A_MINUS = 'A-', 'A- (90-92%) - 3.7'
+    B_PLUS = 'B+', 'B+ (87-89%) - 3.3'
+    B = 'B', 'B (83-86%) - 3.0'
+    B_MINUS = 'B-', 'B- (80-82%) - 2.7'
+    C_PLUS = 'C+', 'C+ (77-79%) - 2.3'
+    C = 'C', 'C (73-76%) - 2.0'
+    C_MINUS = 'C-', 'C- (70-72%) - 1.7'
+    D_PLUS = 'D+', 'D+ (67-69%) - 1.3'
+    D = 'D', 'D (63-66%) - 1.0'
+    D_MINUS = 'D-', 'D- (60-62%) - 0.7'
+    F = 'F', 'F (0-59%) - 0.0'
+
+
+class USGradePoint(models.TextChoices):
+    """
+    American Grade Point Values (4.0 Scale).
+    """
+    A_PLUS = '4.0', '4.0'
+    A = '4.0', '4.0'
+    A_MINUS = '3.7', '3.7'
+    B_PLUS = '3.3', '3.3'
+    B = '3.0', '3.0'
+    B_MINUS = '2.7', '2.7'
+    C_PLUS = '2.3', '2.3'
+    C = '2.0', '2.0'
+    C_MINUS = '1.7', '1.7'
+    D_PLUS = '1.3', '1.3'
+    D = '1.0', '1.0'
+    D_MINUS = '0.7', '0.7'
+    F = '0.0', '0.0'
 
 
 class Faculty(models.Model):

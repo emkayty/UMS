@@ -8,29 +8,67 @@ from apps.academic.models import Programme, AcademicSession
 # ============================================================
 
 class FeeType(models.TextChoices):
-    # University Fees
-    TUITION = 'tuition', ' tuition'
+    # ============================================================
+    # NIGERIAN UNIVERSITY FEES
+    # ============================================================
+    
+    # Core Fees
+    TUITION = 'tuition', 'Tuition Fee'
     ACCEPTANCE = 'acceptance', 'Acceptance Fee'
     REGISTRATION = 'registration', 'Registration Fee'
     EXAMINATION = 'examination', 'Examination Fee'
+    MATRICULATION = 'matriculation', 'Matriculation Fee'
+    
+    # Facility Fees
     LIBRARY = 'library', 'Library Fee'
     ICT = 'ict', 'ICT Fee'
     SPORTS = 'sports', 'Sports Fee'
     MEDICAL = 'medical', 'Medical Fee'
     DEVELOPMENT = 'development', 'Development Fee'
-    MATRICULATION = 'matriculation', 'Matriculation Fee'
     HOSTEL = 'hostel', 'Hostel Fee'
     LABORATORY = 'laboratory', 'Laboratory Fee'
+    
+    # Additional Fees
     FIELD_TRIP = 'field_trip', 'Field Trip Fee'
     PROJECT = 'project', 'Project Fee'
     TRANSPORT = 'transport', 'Transport Fee'
     
-    # Polytechnic Additional
+    # Polytechnic Specific
     INDUSTRIAL_TRAINING = 'it', 'Industrial Training (SIWES)'
-    entrepreneurship = 'ent', 'Entrepreneurship Fee'
+    ENTREPRENEURSHIP = 'ent', 'Entrepreneurship Fee'
     
     # Other
     OTHER = 'other', 'Other Fee'
+    
+    # ============================================================
+    # AMERICAN UNIVERSITY FEE TYPES
+    # ============================================================
+    
+    # Tuition (Semester-based)
+    TUITION_RESIDENT = 'tuition_resident', 'In-State Tuition'
+    TUITION_NON_RESIDENT = 'tuition_non_resident', 'Out-of-State Tuition'
+    TUITION_INTL = 'tuition_intl', 'International Tuition'
+    TUITION_PART_TIME = 'tuition_part', 'Part-Time Tuition'
+    TUITION_EXTRA_CREDIT = 'tuition_credit', 'Per Credit Hour Fee'
+    
+    # Fees
+    COMPREHENSIVE_FEE = 'comprehensive', 'Comprehensive Fee'
+    FACILITY_FEE = 'facility', 'Facility Fee'
+    TECHNOLOGY_FEE = 'technology', 'Technology Fee'
+    HEALTH_FEE = 'health', 'Health Services Fee'
+    RECREATION_FEE = 'recreation', 'Recreation Fee'
+    STUDENT_ACTIVITY = 'student_activity', 'Student Activity Fee'
+    PARKING_FEE = 'parking', 'Parking Fee'
+    HOUSING_FEE = 'housing', 'Housing/Dorm Fee'
+    MEAL_PLAN = 'meal', 'Meal Plan Fee'
+    
+    # Orientation & Training
+    ORIENTATION = 'orientation', 'New Student Orientation'
+    GRADUATION = 'graduation', 'Graduation Fee'
+    
+    # Books & Materials
+    BOOKS = 'books', 'Bookstore Credit'
+    DIGITAL_MATERIALS = 'digital', 'Digital Materials'
 
 
 class FeeStatus(models.TextChoices):
