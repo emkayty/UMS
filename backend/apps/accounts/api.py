@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
 from ninja import Router, Schema
-from rest_framework import status as http_status
+# from rest_framework import status as http_status
 
 from apps.accounts.models import User, PasswordHistory
 from apps.accounts.authentication import (
