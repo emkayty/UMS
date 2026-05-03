@@ -14,7 +14,7 @@ from apps.student.models import StudentProfile
 from apps.staff.models import StaffProfile
 from apps.finance.models import FeeType, StudentFee
 from apps.institution.models import Settings
-from apps.lifecycle.models import Hostel, HostelApplication
+from apps.lifecycle.models import Hostel
 from apps.student.admission import OnlineApplication, AdmissionLetter
 from apps.student.transcript import TranscriptRequest
 from apps.finance.payments import PaymentTransaction, Invoice, BankAccount
