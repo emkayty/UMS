@@ -5,6 +5,38 @@ from apps.accounts.models import User
 from apps.academic.models import Department, Faculty
 
 
+# ============================================================
+# NIGERIAN STAFF RANKS
+# ============================================================
+
+class StaffRank(models.TextChoices):
+    # Academic Staff Ranks (Universities)
+    LECTURER_III = 'lecturer_iii', 'Lecturer III'
+    LECTURER_II = 'lecturer_ii', 'Lecturer II'
+    LECTURER_I = 'lecturer_i', 'Lecturer I'
+    SENIOR_LECTURER = 'senior_lecturer', 'Senior Lecturer'
+    READER = 'reader', 'Reader (Associate Professor)'
+    PROFESSOR = 'professor', 'Professor'
+    
+    # Polytechnic Academic Ranks
+    CHIEF_LECTURER = 'chief_lecturer', 'Chief Lecturer'
+    PRINCIPAL_LECTURER = 'principal_lecturer', 'Principal Lecturer'
+    SENIOR_LECTURER_P = 'senior_lecturer_p', 'Senior Lecturer (Poly)'
+    LECTURER_P = 'lecturer_p', 'Lecturer (Poly)'
+    
+    # Administrative Ranks
+    HOD = 'hod', 'Head of Department'
+    DEAN = 'dean', 'Dean'
+    REGISTRAR = 'registrar', 'Registrar'
+    BURSAR = 'bursar', 'Bursar'
+    VICE_CHANCELLOR = 'vc', 'Vice Chancellor'
+    CHANCELLOR = 'chancellor', 'Chancellor'
+    
+    # Support Staff
+    SENIOR_STAFF = 'senior_staff', 'Senior Staff'
+    JUNIOR_STAFF = 'junior_staff', 'Junior Staff'
+
+
 class LeaveRequestStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
     APPROVED = 'approved', 'Approved'
@@ -44,11 +76,21 @@ class StaffProfile(models.Model):
     # Employment details
     employment_date = models.DateField()
     confirmation_date = models.DateField(null=True, blank=True)
-    rank = models.CharField(max_length=100, blank=True)
-    grade = models.CharField(max_length=10, blank=True)
+    rank = models.CharField(
+        max_length=20, choices=StaffRank.choices,
+        blank=True
+    )
+    grade = models.CharField(
+        max_length=10, blank=True,
+        help_text='GL10, GL12, etc.'
+    )
     step = models.IntegerField(default=1)
-    contract_type = models.CharField(max_length=50, default='permanent')
-    scheme_of_service = models.CharField(max_length=100, blank=True)
+    contract_type = models.CharField(
+        max_length=20, default='permanent'
+    )
+    scheme_of_service = models.CharField(
+        max_length=100, blank=True
+    )
     
     # Contact
     phone = models.CharField(max_length=20, blank=True)

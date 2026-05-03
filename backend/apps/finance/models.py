@@ -3,6 +3,36 @@ from django.db import models
 from apps.academic.models import Programme, AcademicSession
 
 
+# ============================================================
+# NIGERIAN UNIVERSITY FEE TYPES
+# ============================================================
+
+class FeeType(models.TextChoices):
+    # University Fees
+    TUITION = 'tuition', ' tuition'
+    ACCEPTANCE = 'acceptance', 'Acceptance Fee'
+    REGISTRATION = 'registration', 'Registration Fee'
+    EXAMINATION = 'examination', 'Examination Fee'
+    LIBRARY = 'library', 'Library Fee'
+    ICT = 'ict', 'ICT Fee'
+    SPORTS = 'sports', 'Sports Fee'
+    MEDICAL = 'medical', 'Medical Fee'
+    DEVELOPMENT = 'development', 'Development Fee'
+    MATRICULATION = 'matriculation', 'Matriculation Fee'
+    HOSTEL = 'hostel', 'Hostel Fee'
+    LABORATORY = 'laboratory', 'Laboratory Fee'
+    FIELD_TRIP = 'field_trip', 'Field Trip Fee'
+    PROJECT = 'project', 'Project Fee'
+    TRANSPORT = 'transport', 'Transport Fee'
+    
+    # Polytechnic Additional
+    INDUSTRIAL_TRAINING = 'it', 'Industrial Training (SIWES)'
+    entrepreneurship = 'ent', 'Entrepreneurship Fee'
+    
+    # Other
+    OTHER = 'other', 'Other Fee'
+
+
 class FeeStatus(models.TextChoices):
     PENDING = 'pending', 'Pending'
     PARTIAL = 'partial', 'Partial'
@@ -16,10 +46,17 @@ class PaymentStatus(models.TextChoices):
 
 
 class FeeItem(models.Model):
-    """Fee item definition."""
+    """Fee item - Nigerian university fee structure."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    fee_type = models.CharField(
+        max_length=20, choices=FeeType.choices,
+        default=FeeType.TUITION
+    )
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        help_text='Amount in Naira'
+    )
     is_compulsory = models.BooleanField(default=True)
     description = models.TextField(blank=True)
     programme = models.ForeignKey(
@@ -30,7 +67,14 @@ class FeeItem(models.Model):
         AcademicSession, on_delete=models.CASCADE, null=True, blank=True,
         related_name='fee_items'
     )
-    level = models.IntegerField(null=True, blank=True)
+    level = models.IntegerField(
+        null=True, blank=True,
+        help_text='100-600 level'
+    )
+    semester = models.IntegerField(
+        null=True, blank=True,
+        help_text='1 or 2'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

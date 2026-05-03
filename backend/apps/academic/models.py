@@ -3,14 +3,43 @@ from django.db import models
 from apps.accounts.models import User
 
 
+# ============================================================
+# NIGERIAN UNIVERSITY PROGRAMME TYPES
+# ============================================================
+
+class ProgrammeType(models.TextChoices):
+    ND = 'nd', 'National Diploma (ND)'
+    HND = 'hnd', 'Higher National Diploma (HND)'
+    BSc = 'bsc', 'Bachelor of Science (BSc)'
+    BScEd = 'bsced', 'Bachelor of Education (BSc.Ed)'
+    BA = 'ba', 'Bachelor of Arts (BA)'
+    BTech = 'btch', 'Bachelor of Technology (BTech)'
+    LLB = 'llb', 'Bachelor of Law (LLB)'
+    MBBS = 'mbbs', 'Bachelor of Medicine (MBBS)'
+    MSc = 'msc', 'Master of Science (MSc)'
+    MA = 'ma', 'Master of Arts (MA)'
+    MTech = 'mtech', 'Master of Technology (MTech)'
+    PhD = 'phd', 'Doctor of Philosophy (PhD)'
+    PGDE = 'pgde', 'Postgraduate Diploma'
+
+
+class GradeLetter(models.TextChoices):
+    A = 'A', 'Excellent (70-100)'
+    B = 'B', 'Very Good (60-69)'
+    C = 'C', 'Good (50-59)'
+    D = 'D', 'Satisfactory (45-49)'
+    E = 'E', 'Pass (40-44)'
+    F = 'F', 'Fail (0-39)'
+
+
 class Faculty(models.Model):
-    """Faculty model."""
+    """Faculty model - Nigerian University structure."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=10, unique=True, db_index=True)
     dean = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='dean_of', limit_choices_to={'role': 'dean'}
+        related_name='dean_of'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -37,7 +66,7 @@ class Department(models.Model):
     )
     hod = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='hod_of', limit_choices_to={'role': 'hod'}
+        related_name='hod_of'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
