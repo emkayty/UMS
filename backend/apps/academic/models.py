@@ -111,7 +111,7 @@ class USGradePoint(models.TextChoices):
     """
     American Grade Point Values (4.0 Scale).
     """
-    A_PLUS = '4.0', 'A+'
+    A_PLUS = '4.3', 'A+'
     A = '4.0', 'A'
     A_MINUS = '3.7', 'A-'
     B_PLUS = '3.3', 'B+'
