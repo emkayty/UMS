@@ -111,19 +111,19 @@ class USGradePoint(models.TextChoices):
     """
     American Grade Point Values (4.0 Scale).
     """
-    A_PLUS = '4.3', 'A+'
-    A = '4.0', 'A'
-    A_MINUS = '3.7', 'A-'
-    B_PLUS = '3.3', 'B+'
-    B = '3.0', 'B'
-    B_MINUS = '2.7', 'B-'
-    C_PLUS = '2.3', 'C+'
-    C = '2.0', 'C'
-    C_MINUS = '1.7', 'C-'
-    D_PLUS = '1.3', 'D+'
-    D = '1.0', 'D'
-    D_MINUS = '0.7', 'D-'
-    F = '0.0', 'F'
+    A_PLUS = 'AP', 'A+'
+    A = 'A', 'A'
+    A_MINUS = 'AM', 'A-'
+    B_PLUS = 'BP', 'B+'
+    B = 'B', 'B'
+    B_MINUS = 'BM', 'B-'
+    C_PLUS = 'CP', 'C+'
+    C = 'C', 'C'
+    C_MINUS = 'CM', 'C-'
+    D_PLUS = 'DP', 'D+'
+    D = 'D', 'D'
+    D_MINUS = 'DM', 'D-'
+    F = 'F', 'F'
 
 
 class Faculty(models.Model):
