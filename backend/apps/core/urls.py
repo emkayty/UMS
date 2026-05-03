@@ -1,11 +1,14 @@
 """
 URL Routing for new API endpoints
 COMPLETE API - All endpoints registered
+Django Ninja primary, DRF for compatibility
 """
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
+# Django Ninja import
+from apps.core.api import router as ninja_router
 from apps.institution.views import HostelViewSet, HostelApplicationViewSet
 from apps.student.views import StudentProfileViewSet, OnlineApplicationViewSet, TranscriptRequestViewSet
 from apps.finance.views import PaymentViewSet, InvoiceViewSet, FeeTypeViewSet, BankAccountViewSet
@@ -93,6 +96,13 @@ router.register(r'attendance-logs', AttendanceLogViewSet, basename='attendance-l
 router.register(r'guardians', GuardianViewSet, basename='guardian')
 router.register(r'next-of-kin', NextOfKinViewSet, basename='next-of-kin')
 
+# Django Ninja API routes
+from django.urls import path
+from apps.core.api import router as ninja_router
+
 urlpatterns = [
+    # Django Ninja (PRIMARY API)
+    path('api/v1/', include(ninja_router.urls)),
+    # DRF (compatibility)
     path('', include(router.urls)),
 ]
