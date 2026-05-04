@@ -1,6 +1,6 @@
 """
 JWT Authentication with refresh token rotation and blacklisting.
-Production-ready security implementation.
+Production-ready security implementation using Django Ninja.
 """
 import secrets
 import hashlib
@@ -9,7 +9,9 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from django.conf import settings
 from django.core.cache import cache
-from rest_framework import authentication, exceptions
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -142,49 +144,41 @@ def is_token_revoked(payload: dict) -> bool:
     return False
 
 
-class JWTAuthentication(authentication.BaseAuthentication):
-    """JWT Authentication with token blacklisting support."""
-
-    keyword = 'Bearer'
-
-    def authenticate(self, request):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
+# === Django Ninja JWT Auth (NEW) ===
+def authenticate_request(request):
+    """Ninja-compatible JWT authentication."""
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header:
+        return None
+    
+    try:
+        prefix, token = auth_header.split(' ')
+        if prefix.lower() != 'bearer':
             return None
-
-        try:
-            prefix, token = auth_header.split(' ')
-            if prefix.lower() != self.keyword.lower():
-                return None
-        except ValueError:
-            return None
-
-        return self._authenticate_credentials(token), None
-
-    def _authenticate_credentials(self, token):
-        try:
-            payload = jwt.decode(
-                token,
-                settings.JWT_SECRET_KEY,
-                algorithms=[settings.JWT_ALGORITHM],
-                options={'verify_exp': True}
-            )
-        except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed('Token has expired')
-        except jwt.InvalidTokenError:
-            raise exceptions.AuthenticationFailed('Invalid token')
-
-        # Check if token is revoked
-        if is_token_revoked(payload):
-            raise exceptions.AuthenticationFailed('Token has been revoked')
-
-        from apps.accounts.models import User
-        try:
-            user = User.objects.get(id=payload['user_id'])
-        except User.DoesNotExist:
-            raise exceptions.AuthenticationFailed('User not found')
-
-        if not user.is_active:
-            raise exceptions.AuthenticationFailed('User account is disabled')
-
-        return (user, token)
+    except ValueError:
+        return None
+    
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            options={'verify_exp': True}
+        )
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+    
+    if is_token_revoked(payload):
+        return None
+    
+    try:
+        user = User.objects.get(id=payload['user_id'])
+    except User.DoesNotExist:
+        return None
+    
+    if not user.is_active:
+        return None
+    
+    return user
