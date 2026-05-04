@@ -49,6 +49,16 @@ class LeaveRequestUpdateSchema(Schema):
     rejection_reason: Optional[str] = None
 
 
+class LeaveRequestSchema(Schema):
+    id: str
+    staff_id: str
+    leave_type: str
+    start_date: str
+    end_date: str
+    status: str
+    reason: str
+
+
 class LeaveBalanceSchema(Schema):
     id: str
     leave_type: str

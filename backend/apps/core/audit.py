@@ -52,7 +52,7 @@ class AuditLog(models.Model):
     
     # Request info
     ip_address = models.GenericIPAddressField(null=True)
-    user_agent = models.TextField(blank())
+    user_agent = models.TextField(default='')
     request_method = models.CharField(max_length=10)
     request_path = models.TextField()
     

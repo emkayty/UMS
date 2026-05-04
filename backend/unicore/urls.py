@@ -27,12 +27,12 @@ from apps.lifecycle.api import router as lifecycle_router
 # New routers (v2)
 from apps.student.attendance_api import router as attendance_router
 from apps.student.workflow_api import router as workflow_router
-from apps.student.extended_services_api import router as services_router
+from apps.student.extended_services_api import router as student_services_router
 from apps.student.disciplinary_api import router as disciplinary_router
 
 # Learning routers
 from apps.learning.library_exam_api import router as library_exam_router
-from apps.institution.services_api import router as services_router
+from apps.institution.services_api import router as institution_services_router
 from apps.student.additional_api import router as additional_router
 
 api = NinjaAPI(title='UniCore API', version='1.0.0')
@@ -55,19 +55,22 @@ api.add_router('/lifecycle/', lifecycle_router)
 # New v2 routers
 api.add_router('/attendance/', attendance_router)
 api.add_router('/workflow/', workflow_router)
-api.add_router('/services/', services_router)
+api.add_router('/services/', student_services_router)
 api.add_router('/disciplinary/', disciplinary_router)
 
 # Learning v2
 api.add_router('/library/', library_exam_router)
 
 # Institution
-api.add_router('/ict/', services_router)
+api.add_router('/ict/', institution_services_router)
 
 # Additional
 api.add_router('/academic/', additional_router)
 
 # Core unified
+from apps.core.api import router as core_router
+from apps.core.enterprise_api import router as enterprise_router
+
 api.add_router('/core/', core_router)
 
 # Enterprise
@@ -100,8 +103,6 @@ urlpatterns += [
     )),
 ]
 
-from apps.core.api import router as core_router
 
 
-from apps.core.enterprise_api import router as enterprise_router
 
