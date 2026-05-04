@@ -43,32 +43,51 @@ A comprehensive **University Management System** built with modern technologies 
 
 ## 🚦 Quick Start
 
-### 1. Backend (API on port 8000)
+### Platform-Specific Setup
+
+#### 🐧 Linux / 🍎 macOS
 ```bash
+# Backend
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+python3 manage.py migrate
+python3 manage.py runserver
+
+# Frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+#### 🪟 Windows (PowerShell)
+```powershell
+# Backend
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+venv\Scripts\Activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+
+# Frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+#### 🪟 Windows (CMD)
+```cmd
+cd backend
+python -m venv venv
+venv\Scripts\activate.bat
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 ```
-**URL**: http://localhost:8000
 
-### 2. Frontend (Web on port 3000)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-**URL**: http://localhost:3000
-
-### 3. Mobile (Expo)
-```bash
-cd mobile
-npm install
-npm start
-```
-**Scan QR** with Expo Go
+> **Note**: For Windows, you may need to install Python from python.org first
 
 ---
 
