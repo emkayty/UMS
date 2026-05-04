@@ -7,7 +7,7 @@ class AuditLog(models.Model):
     """Immutable audit log."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, related_name='audit_logs'
+        User, on_delete=models.SET_NULL, null=True, related_name='audit_logs_dup'
     )
     action_type = models.CharField(max_length=50)
     model_name = models.CharField(max_length=50)

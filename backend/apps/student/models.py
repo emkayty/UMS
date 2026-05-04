@@ -16,7 +16,7 @@ class StudentProfile(models.Model):
     """Extended student profile."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name='student_profile'
+        User, on_delete=models.CASCADE, related_name='student_profile_dup'
     )
     matric_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=100)
