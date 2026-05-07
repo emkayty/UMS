@@ -18,6 +18,12 @@ from django.utils import timezone
 @receiver(pre_save, dispatch_uid='user_pre_save')
 def user_pre_save(sender, instance, **kwargs):
     """Pre-save user processing."""
+    # Only process User model
+    if sender._meta.model_name != 'user':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if instance.email:
         instance.email = instance.email.lower()
     
@@ -28,15 +34,12 @@ def user_pre_save(sender, instance, **kwargs):
 @receiver(post_save, dispatch_uid='user_post_save')
 def user_post_save(sender, instance, created, **kwargs):
     """Post-save user actions."""
+    # Only process User model
+    if sender._meta.model_name != 'user':
+        return
     if created:
-        # Create audit log
-        from apps.core.models import AuditLog
-        AuditLog.objects.create(
-            user=instance,
-            action='create',
-            model_name='User',
-            object_id=str(instance.id)
-        )
+        # Audit log - comment out as AuditLog model doesn't exist
+        pass
 
 
 # ============================================================
@@ -93,7 +96,13 @@ def registration_post_save(sender, instance, created, **kwargs):
 @receiver(pre_save, dispatch_uid='result_pre_save')
 def result_pre_save(sender, instance, **kwargs):
     """Pre-save result processing."""
-    if instance.score is not None:
+    # Only process Result model
+    if sender._meta.model_name != 'result':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if hasattr(instance, 'score') and instance.score is not None:
         from apps.core.utils import score_to_grade, score_to_grade_point
         instance.grade = score_to_grade(instance.score)
         instance.grade_point = score_to_grade_point(instance.score)
@@ -127,7 +136,13 @@ def result_post_save(sender, instance, created, **kwargs):
 @receiver(pre_save, dispatch_uid='payment_pre_save')
 def payment_pre_save(sender, instance, **kwargs):
     """Pre-save payment processing."""
-    if instance.status == 'success' and not instance.paid_at:
+    # Only process Payment model
+    if sender._meta.model_name != 'payment':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if hasattr(instance, 'status') and instance.status == 'success' and not instance.paid_at:
         instance.paid_at = timezone.now()
 
 
@@ -205,6 +220,12 @@ def attendance_post_save(sender, instance, created, **kwargs):
 @receiver(pre_save, dispatch_uid='leave_pre_save')
 def leave_pre_save(sender, instance, **kwargs):
     """Pre-save leave processing."""
+    # Only process LeaveRequest model
+    if sender._meta.model_name != 'leaverequest':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if instance.start_date and instance.end_date:
         instance.days = (instance.end_date - instance.start_date).days + 1
 

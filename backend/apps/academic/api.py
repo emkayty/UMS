@@ -1,5 +1,6 @@
 from ninja import Router, Schema
 from typing import Optional, List
+from uuid import UUID
 from django.shortcuts import get_object_or_404
 
 from apps.academic.models import (
@@ -13,55 +14,75 @@ router = Router(tags=['Academic Structure'])
 
 # === Schemas ===
 class FacultySchema(Schema):
-    id: str
+    id: UUID  # Changed from str to UUID
     name: str
     code: str
-    dean_id: Optional[str] = None
+    dean_id: Optional[UUID] = None
+
+
+class FacultyCreateSchema(Schema):
+    name: str
+    code: str
+    dean_id: Optional[UUID] = None
 
 
 class DepartmentSchema(Schema):
-    id: str
+    id: UUID
     name: str
     code: str
-    faculty_id: str
-    hod_id: Optional[str] = None
+    faculty_id: UUID
+    hod_id: Optional[UUID] = None
+
+
+class DepartmentCreateSchema(Schema):
+    name: str
+    code: str
+    faculty_id: UUID
+    hod_id: Optional[UUID] = None
 
 
 class ProgrammeSchema(Schema):
-    id: str
+    id: UUID
     name: str
     code: str
     duration_years: int
-    department_id: str
+    department_id: UUID
+
+
+class ProgrammeCreateSchema(Schema):
+    name: str
+    code: str
+    duration_years: int
+    department_id: UUID
 
 
 class CourseSchema(Schema):
-    id: str
+    id: UUID
     code: str
     title: str
     credit_units: int
     level: int
     semester: int
     semester_offered: list
-    programme_id: str
-    department_id: str
+    programme_id: UUID
+    department_id: UUID
     has_prerequisites: bool
 
 
 class GradingPolicySchema(Schema):
-    id: str
+    id: UUID
     name: str
     scale_type: str
     grade_boundaries: list
     pass_mark: int
     max_score: int
-    faculty_id: Optional[str] = None
-    programme_id: Optional[str] = None
-    course_id: Optional[str] = None
+    faculty_id: Optional[UUID] = None
+    programme_id: Optional[UUID] = None
+    course_id: Optional[UUID] = None
 
 
 class AcademicSessionSchema(Schema):
-    id: str
+    id: UUID
     name: str
     start_date: str
     end_date: str
@@ -69,8 +90,8 @@ class AcademicSessionSchema(Schema):
 
 
 class SemesterSchema(Schema):
-    id: str
-    session_id: str
+    id: UUID
+    session_id: UUID
     name: str
     start_date: str
     end_date: str
@@ -86,7 +107,7 @@ def list_faculties(request):
 
 
 @router.post('/faculties', response=FacultySchema)
-def create_faculty(request, data: FacultySchema):
+def create_faculty(request, data: FacultyCreateSchema):
     faculty = Faculty.objects.create(
         name=data.name,
         code=data.code,
@@ -120,7 +141,7 @@ def delete_faculty(request, id: str):
 
 # === Department APIs ===
 @router.get('/departments', response=List[DepartmentSchema])
-def list_departments(request, faculty_id: str = None):
+def list_departments(request, faculty_id: UUID = None):
     qs = Department.objects.all()
     if faculty_id:
         qs = qs.filter(faculty_id=faculty_id)
@@ -128,7 +149,7 @@ def list_departments(request, faculty_id: str = None):
 
 
 @router.post('/departments', response=DepartmentSchema)
-def create_department(request, data: DepartmentSchema):
+def create_department(request, data: DepartmentCreateSchema):
     dept = Department.objects.create(
         name=data.name,
         code=data.code,
@@ -163,7 +184,7 @@ def delete_department(request, id: str):
 
 # === Programme APIs ===
 @router.get('/programmes', response=List[ProgrammeSchema])
-def list_programmes(request, department_id: str = None):
+def list_programmes(request, department_id: UUID = None):
     qs = Programme.objects.all()
     if department_id:
         qs = qs.filter(department_id=department_id)
@@ -171,7 +192,7 @@ def list_programmes(request, department_id: str = None):
 
 
 @router.post('/programmes', response=ProgrammeSchema)
-def create_programme(request, data: ProgrammeSchema):
+def create_programme(request, data: ProgrammeCreateSchema):
     prog = Programme.objects.create(
         name=data.name,
         code=data.code,
@@ -183,7 +204,7 @@ def create_programme(request, data: ProgrammeSchema):
 
 # === Course APIs ===
 @router.get('/courses', response=List[CourseSchema])
-def list_courses(request, programme_id: str = None, level: int = None):
+def list_courses(request, programme_id: UUID = None, level: int = None):
     qs = Course.objects.all()
     if programme_id:
         qs = qs.filter(programme_id=programme_id)
@@ -235,8 +256,8 @@ def get_grading_policy(request, id: str):
 
 
 @router.get('/resolve-grading-policy')
-def resolve_grading_policy(request, registration_id: str = None, course_id: str = None, 
-                     programme_id: str = None, faculty_id: str = None):
+def resolve_grading_policy(request, registration_id: UUID = None, course_id: UUID = None, 
+                     programme_id: UUID = None, faculty_id: UUID = None):
     """Resolve effective grading policy with inheritance."""
     policy = GradingPolicy.resolve_policy(course_id, programme_id, faculty_id)
     return GradingPolicySchema(
@@ -268,7 +289,7 @@ def create_session(request, data: AcademicSessionSchema):
 
 # === Semester APIs ===
 @router.get('/semesters', response=List[SemesterSchema])
-def list_semesters(request, session_id: str = None):
+def list_semesters(request, session_id: UUID = None):
     qs = Semester.objects.all()
     if session_id:
         qs = qs.filter(session_id=session_id)
