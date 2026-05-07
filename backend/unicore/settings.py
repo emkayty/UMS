@@ -68,6 +68,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom middleware
+    'unicore.middleware.CORSMiddleware',
+    'unicore.middleware.SecurityHeadersMiddleware',
+    'unicore.middleware.APIVersionMiddleware',
 ]
 
 ROOT_URLCONF = 'unicore.urls'
