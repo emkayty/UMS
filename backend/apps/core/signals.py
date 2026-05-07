@@ -49,16 +49,19 @@ def user_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='student_post_save')
 def student_post_save(sender, instance, created, **kwargs):
     """Post-save student actions."""
+    # Only process StudentProfile model
+    if sender._meta.model_name != 'studentprofile':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if created:
         # Generate student email
-        if instance.user and instance.student_id:
+        if hasattr(instance, 'user') and instance.user and hasattr(instance, 'student_id') and instance.student_id:
             email = f"{instance.student_id}@student.university.edu"
             if not instance.user.email:
                 instance.user.email = email
                 instance.user.save()
-        
-        # Notify relevant parties
-        pass
 
 
 # ============================================================
@@ -68,9 +71,15 @@ def student_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='staff_post_save')
 def staff_post_save(sender, instance, created, **kwargs):
     """Post-save staff actions."""
+    # Only process StaffProfile model
+    if sender._meta.model_name != 'staffprofile':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if created:
         # Create email
-        if instance.user and instance.staff_id:
+        if hasattr(instance, 'user') and instance.user and hasattr(instance, 'staff_id') and instance.staff_id:
             email = f"{instance.staff_id}@university.edu"
             if not instance.user.email:
                 instance.user.email = email
@@ -84,7 +93,13 @@ def staff_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='registration_post_save')
 def registration_post_save(sender, instance, created, **kwargs):
     """Post-save registration actions."""
-    if created and instance.status == 'approved':
+    # Only process CourseRegistration model
+    if sender._meta.model_name != 'courseregistration':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if created and hasattr(instance, 'status') and instance.status == 'approved':
         # Update student's current courses
         pass
 
@@ -111,22 +126,29 @@ def result_pre_save(sender, instance, **kwargs):
 @receiver(post_save, dispatch_uid='result_post_save')
 def result_post_save(sender, instance, created, **kwargs):
     """Post-save result actions."""
-    if instance.approved:
+    # Only process Result model
+    if sender._meta.model_name != 'result':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if hasattr(instance, 'approved') and instance.approved:
         # Recalculate student GPA
         from apps.core.models import StudentProfile
         
-        student = instance.student
-        results = instance.__class__.objects.filter(
-            student=student,
-            approved=True
-        )
-        
-        # Calculate new CGPA
-        from apps.core.utils import calculate_gpa
-        cgpa = calculate_gpa(results)
-        
-        student.cgpa = cgpa
-        student.save()
+        if hasattr(instance, 'student'):
+            student = instance.student
+            results = instance.__class__.objects.filter(
+                student=student,
+                approved=True
+            )
+            
+            # Calculate new CGPA
+            from apps.core.utils import calculate_gpa
+            cgpa = calculate_gpa(results)
+            
+            student.cgpa = cgpa
+            student.save()
 
 
 # ============================================================
@@ -149,7 +171,13 @@ def payment_pre_save(sender, instance, **kwargs):
 @receiver(post_save, dispatch_uid='payment_post_save')
 def payment_post_save(sender, instance, created, **kwargs):
     """Post-save payment actions."""
-    if created and instance.status == 'success':
+    # Only process Payment model
+    if sender._meta.model_name != 'payment':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if created and hasattr(instance, 'status') and instance.status == 'success':
         # Update invoice status
         from apps.core.models import Invoice
         
@@ -196,21 +224,15 @@ def invoice_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='attendance_post_save')
 def attendance_post_save(sender, instance, created, **kwargs):
     """Post-save attendance actions."""
+    # Only process StudentAttendance model
+    if sender._meta.model_name != 'studentattendance':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if created:
-        # Check if below threshold
-        from apps.core.models import StudentAttendance
-        
-        records = instance.__class__.objects.filter(
-            student=instance.student,
-            course=instance.course
-        )
-        
-        from apps.core.utils import calculate_attendance_percentage
-        percentage = calculate_attendance_percentage(records)
-        
-        if percentage < 75:
-            # Send warning
-            pass
+        # Check if below threshold - skip if model not available
+        pass
 
 
 # ============================================================
@@ -233,7 +255,13 @@ def leave_pre_save(sender, instance, **kwargs):
 @receiver(post_save, dispatch_uid='leave_post_save')
 def leave_post_save(sender, instance, created, **kwargs):
     """Post-save leave actions."""
-    if instance.status == 'approved':
+    # Only process LeaveRequest model
+    if sender._meta.model_name != 'leaverequest':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if hasattr(instance, 'status') and instance.status == 'approved':
         # Update leave balance
         pass
 
@@ -245,7 +273,13 @@ def leave_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='announcement_post_save')
 def announcement_post_save(sender, instance, created, **kwargs):
     """Post-save announcement actions."""
-    if created and instance.is_published:
+    # Only process Announcement model
+    if sender._meta.model_name != 'announcement':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if created and hasattr(instance, 'is_published') and instance.is_published:
         # Send notification to target users
         pass
 
@@ -257,6 +291,12 @@ def announcement_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='disciplinary_post_save')
 def disciplinary_post_save(sender, instance, created, **kwargs):
     """Post-save disciplinary actions."""
+    # Only process StudentDiscipline model
+    if sender._meta.model_name != 'studentdiscipline':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
     if created:
         # Create notification
         pass
@@ -269,7 +309,13 @@ def disciplinary_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, dispatch_uid='clearance_post_save')
 def clearance_post_save(sender, instance, created, **kwargs):
     """Post-save clearance actions."""
-    if created and instance.status == 'approved':
+    # Only process Clearance model
+    if sender._meta.model_name != 'clearance':
+        return
+    if not hasattr(instance, '_meta'):
+        return
+        
+    if created and hasattr(instance, 'status') and instance.status == 'approved':
         student = instance.student
         student.clearance_complete = True
         student.save()
