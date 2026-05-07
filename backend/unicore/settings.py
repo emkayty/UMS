@@ -68,6 +68,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom middleware
+    'unicore.middleware.CORSMiddleware',
+    'unicore.middleware.SecurityHeadersMiddleware',
+    'unicore.middleware.APIVersionMiddleware',
+    'unicore.middleware.RequestLoggingMiddleware',
+    'unicore.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'unicore.urls'
@@ -180,6 +186,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.IsAuthenticated',
     ],
+    # Rate limiting configuration
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',  # Anonymous users: 100 requests/day
+        'user': '1000/day',  # Authenticated users: 1000/day
+        'burst': '10/min',  # Burst allowance: 10/min
+    },
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'EXCEPTION_HANDLER': 'unicore.exceptions.custom_exception_handler',

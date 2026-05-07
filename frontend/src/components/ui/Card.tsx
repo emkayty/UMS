@@ -30,4 +30,3 @@ export function CardContent({ children, className }: { children: React.ReactNode
 export function CardFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={clsx("mt-4 pt-2 border-t", className)}>{children}</div>;
 }
-"

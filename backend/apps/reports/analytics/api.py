@@ -6,6 +6,7 @@ Predictive analytics, risk scores, recommendations, chatbot
 from ninja import Router, Schema
 from typing import List, Optional
 from django.shortcuts import get_object_or_404
+from apps.academic.models import AcademicSession
 
 router = Router(tags=['AI & Analytics'])
 
@@ -218,7 +219,6 @@ def get_course_recommendations(request, course_id: str, student_id: str = None):
 def get_enrollment_forecast(request, session_id: str):
     """Get predicted enrollment for a session."""
     from apps.reports.analytics.models import PredictiveEnrollment
-    from apps.academic.models import AcademicSession
     
     session = get_object_or_404(AcademicSession, id=session_id)
     forecast = PredictiveEnrollment.objects.filter(session=session).first()
@@ -441,6 +441,5 @@ def get_realtime_analytics(request):
             'disk': 0.45
         }
     }
-
 
 from apps.academic.models import AcademicSession

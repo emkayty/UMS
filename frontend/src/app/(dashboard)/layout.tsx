@@ -8,10 +8,10 @@ import { useAuth } from '@/lib/auth'
 // Dashboard Layout Component
 export default function DashboardLayout({
   children,
-  role,
+  role = 'student',
 }: {
   children: React.ReactNode
-  role: string
+  role?: string
 }) {
   const router = useRouter()
   const { user, logout, isAuthenticated } = useAuth()

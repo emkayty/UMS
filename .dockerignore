@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+bower_components/
+
+# Build outputs
+.next/
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+
+# Test & coverage
+.coverage
+.tox/
+htmlcov/
+*.cover
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Development
+*.sqlite3
+db.sqlite3
+*.pid
+
+# Cache
+.cache/
+.npm/
+.eslintcache
