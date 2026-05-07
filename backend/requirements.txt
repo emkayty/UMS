@@ -20,3 +20,13 @@ python-dateutil>=2.8
 
 # Production  
 whitenoise>=6.0
+
+# ML/AI - scikit-learn for predictive analytics
+scikit-learn>=1.0
+numpy>=1.24
+scipy>=1.10
+
+# Background Tasks - Celery
+celery>=5.3
+redis>=5.0
+flower>=2.0  # Celery monitoring

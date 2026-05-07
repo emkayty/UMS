@@ -63,4 +63,3 @@ export function ModalContent({ children }: { children: React.ReactNode }) {
 export function ModalFooter({ children }: { children: React.ReactNode }) {
   return <div className="flex gap-2 mt-4 justify-end">{children}</div>;
 }
-"
