@@ -73,6 +73,7 @@ MIDDLEWARE = [
     'unicore.middleware.SecurityHeadersMiddleware',
     'unicore.middleware.APIVersionMiddleware',
     'unicore.middleware.RequestLoggingMiddleware',
+    'unicore.middleware.RateLimitMiddleware',
 ]
 
 ROOT_URLCONF = 'unicore.urls'

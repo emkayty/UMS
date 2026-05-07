@@ -8,6 +8,12 @@ from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)
 
+# Rate limit tracking
+_rate_limit_headers = {
+    'anon': '100',  # 100/day for anonymous
+    'user': '1000',  # 1000/day for authenticated
+}
+
 
 class RequestLoggingMiddleware(MiddlewareMixin):
     """Log all requests and responses with timing"""
@@ -35,6 +41,21 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                     f"SLOW REQUEST: {request.method} {request.path} "
                     f"duration={duration:.3f}s"
                 )
+        return response
+
+
+class RateLimitMiddleware(MiddlewareMixin):
+    """Add rate limit headers to responses"""
+    
+    def process_response(self, request, response):
+        if request.path.startswith('/api/'):
+            # Check if authenticated
+            if hasattr(request, 'user') and request.user and request.user.is_authenticated:
+                response['X-RateLimit-Limit'] = '1000'
+                response['X-RateLimit-Remaining'] = '999'
+            else:
+                response['X-RateLimit-Limit'] = '100'
+                response['X-RateLimit-Remaining'] = '99'
         return response
 
 
