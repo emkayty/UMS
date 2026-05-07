@@ -10,20 +10,31 @@ logger = logging.getLogger(__name__)
 
 
 class RequestLoggingMiddleware(MiddlewareMixin):
-    """Log all requests and responses"""
+    """Log all requests and responses with timing"""
     
     def process_request(self, request):
         request.start_time = time.time()
-        logger.info(f"REQUEST: {request.method} {request.path}")
+        # Only log API requests
+        if request.path.startswith('/api/'):
+            logger.info(f"REQUEST: {request.method} {request.path}")
         return None
     
     def process_response(self, request, response):
         if hasattr(request, 'start_time'):
             duration = time.time() - request.start_time
-            logger.info(
-                f"RESPONSE: {request.method} {request.path} "
-                f"status={response.status_code} duration={duration:.3f}s"
-            )
+            # Add timing header for API requests
+            if request.path.startswith('/api/'):
+                response['X-Response-Time'] = f"{duration:.3f}s"
+                logger.info(
+                    f"RESPONSE: {request.method} {request.path} "
+                    f"status={response.status_code} duration={duration:.3f}s"
+                )
+            # Log slow requests (>1 second)
+            if duration > 1.0:
+                logger.warning(
+                    f"SLOW REQUEST: {request.method} {request.path} "
+                    f"duration={duration:.3f}s"
+                )
         return response
 
 
