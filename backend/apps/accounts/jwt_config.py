@@ -1,38 +1,26 @@
 """
-JWT Authentication Configuration
-Django REST Framework Simple JWT setup
+JWT Authentication Configuration for Django Ninja
+Production-ready JWT settings without DRF dependencies.
 """
-
 from datetime import timedelta
 
-# JWT Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.token.Token',),
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
-}
+# JWT Settings for Django Ninja
+JWT_SECRET_KEY = 'jwt-secret-key-change-in-production'
+JWT_ALGORITHM = 'HS256'
+JWT_ACCESS_TOKEN_LIFETIME = timedelta(minutes=15)
+JWT_REFRESH_TOKEN_LIFETIME = timedelta(days=7)
+JWT_CLOCK_SKEW = timedelta(seconds=10)
 
-# Authentication classes
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-}
+# Token Blacklist Settings
+JWT_BLACKLIST_ENABLED = True
+JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
 
-# Login view with JWT
-LOGIN_URLS = """
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-
-urlpatterns = [
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+# Authentication scheme - Django Ninja uses function-based auth
+AUTHENTICATION_CLASSES = [
+    'apps.accounts.authentication.JWTAuthentication',
 ]
-"""
+
+# Permission classes - Django Ninja style (callable classes)
+PERMISSION_CLASSES = [
+    'apps.accounts.permissions.IsAuthenticated',
+]
