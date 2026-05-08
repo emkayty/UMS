@@ -115,13 +115,24 @@ DATABASES = {
     }
 }
 
-# Cache configuration - Redis for production, LocMemCache for development
-# Production: Use Redis for caching
+# Cache configuration - Redis for production with connection pooling
+# Connection pool for high-concurrency scenarios
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/1'),
+        'OPTIONS': {
+            # Connection pool settings for high concurrency
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'SOCKET_CONNECT_TIMEOUT': 10,
+            'SOCKET_TIMEOUT': 10,
+        },
+        'KEY_PREFIX': 'ums',
         'TIMEOUT': 300,
+        'VERSION': 1,
     }
 }
 
@@ -131,6 +142,9 @@ if DEBUG and not os.environ.get('REDIS_URL'):
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'unique-snowflake',
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
         }
     }
 
