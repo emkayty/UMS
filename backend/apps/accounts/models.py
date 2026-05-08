@@ -127,7 +127,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().set_password(password)
         self.password_changed_at = timezone.now()
         
-        if record_history and self.id:
+        # Only record history if user is already saved to database
+        if record_history and self.id and not self._state.adding:
             # Save to password history
             PasswordHistory.objects.create(
                 user=self,

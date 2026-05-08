@@ -1,100 +1,170 @@
 /**
- * UMS Mobile - Courses Screen
- * Course listing and enrollment
+ * Courses Screen
+ * Student registered courses - API integrated
  */
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
+import { studentApi } from '../services/api';
 
-interface Course {
-  id: string;
-  code: string;
-  title: string;
-  credits: number;
-  lecturer: string;
-  semester: string;
-  enrolled: number;
-  maxCapacity: number;
-  status: 'open' | 'closed' | 'pending';
+interface Props {
+  navigation: any;
 }
 
-const mockCourses: Course[] = [
-  { id: '1', code: 'CS101', title: 'Introduction to Computer Science', credits: 3, lecturer: 'Dr. Smith', semester: 'First', enrolled: 45, maxCapacity: 50, status: 'open' },
-  { id: '2', code: 'CS201', title: 'Data Structures', credits: 4, lecturer: 'Prof. Johnson', semester: 'First', enrolled: 30, maxCapacity: 40, status: 'open' },
-  { id: '3', code: 'MATH101', title: 'Calculus I', credits: 3, lecturer: 'Dr. Williams', semester: 'First', enrolled: 60, maxCapacity: 60, status: 'closed' },
-  { id: '4', code: 'ENG101', title: 'English Communication', credits: 2, lecturer: 'Ms. Brown', semester: 'First', enrolled: 35, maxCapacity: 40, status: 'open' },
-  { id: '5', code: 'PHY101', title: 'Physics I', credits: 3, lecturer: 'Prof. Davis', semester: 'First', enrolled: 40, maxCapacity: 45, status: 'open' },
-];
+interface Course {
+  id: number;
+  code: string;
+  name: string;
+  credits: number;
+  semester: string;
+  status: string;
+}
 
-export default function CoursesScreen() {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
-  const [search, setSearch] = useState('');
+export function CoursesScreen({ navigation }: Props) {
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedSemester, setSelectedSemester] = useState('all');
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const loadCourses = async () => {
+    try {
+      const result = await studentApi.courses();
+      if (result.success) {
+        // Handle both array and object responses
+        const data = Array.isArray(result.data) ? result.data : result.data.results || [];
+        setCourses(data);
+      }
+    } catch (error) {
+      console.error('Load courses error:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    loadCourses();
   };
 
-  const filteredCourses = courses.filter(c => 
-    c.title.toLowerCase().includes(search.toLowerCase()) ||
-    c.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'registered': return '#22c55e';
+      case 'completed': return '#3b82f6';
+      case 'failed': return '#ef4444';
+      default: return '#f59e0b';
+    }
+  };
 
   const renderCourse = ({ item }: { item: Course }) => (
-    <TouchableOpacity style={styles.courseCard}>
+    <View style={styles.courseCard}>
       <View style={styles.courseHeader}>
         <Text style={styles.courseCode}>{item.code}</Text>
-        <View style={[styles.status, item.status === 'open' ? styles.open : styles.closed]}>
-          <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+            {item.status || 'Registered'}
+          </Text>
         </View>
       </View>
-      <Text style={styles.courseTitle}>{item.title}</Text>
-      <View style={styles.courseInfo}>
-        <Text style={styles.infoText}>{item.credits} Credits</Text>
-        <Text style={styles.infoText}>•</Text>
-        <Text style={styles.infoText}>{item.lecturer}</Text>
-      </View>
+      <Text style={styles.courseName}>{item.name}</Text>
       <View style={styles.courseFooter}>
-        <Text style={styles.enrolled}>{item.enrolled}/{item.maxCapacity} enrolled</Text>
-        <TouchableOpacity 
-          style={[styles.enrollButton, item.status === 'closed' && styles.buttonDisabled]}
-          disabled={item.status === 'closed'}
-        >
-          <Text style={styles.enrollText}>
-            {item.status === 'open' ? 'Enroll' : 'Closed'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.courseInfo}>
+          <Ionicons name="time-outline" size={14} color="#666" />
+          <Text style={styles.courseInfoText}>{item.credits} Credits</Text>
+        </View>
+        <View style={styles.courseInfo}>
+          <Ionicons name="calendar-outline" size={14} color="#666" />
+          <Text style={styles.courseInfoText}>{item.semester || 'First Semester'}</Text>
+        </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading courses...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Courses</Text>
-        <Text style={styles.subtitle}>{courses.length} courses available</Text>
+        <Text style={styles.headerTitle}>My Courses</Text>
+        <Text style={styles.headerSubtitle}>
+          {courses.length} Course{courses.length !== 1 ? 's' : ''} Registered
+        </Text>
       </View>
-      
-      <View style={styles.search}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search courses..."
-          value={search}
-          onChangeText={setSearch}
+
+      {/* Filter */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterChip, selectedSemester === 'all' && styles.filterChipActive]}
+          onPress={() => setSelectedSemester('all')}
+        >
+          <Text style={[styles.filterText, selectedSemester === 'all' && styles.filterTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterChip, selectedSemester === 'first' && styles.filterChipActive]}
+          onPress={() => setSelectedSemester('first')}
+        >
+          <Text style={[styles.filterText, selectedSemester === 'first' && styles.filterTextActive]}>
+            First Semester
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.filterChip, selectedSemester === 'second' && styles.filterChipActive]}
+          onPress={() => setSelectedSemester('second')}
+        >
+          <Text style={[styles.filterText, selectedSemester === 'second' && styles.filterTextActive]}>
+            Second Semester
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Course List */}
+      {courses.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="book-outline" size={60} color="#ccc" />
+          <Text style={styles.emptyText}>No courses registered</Text>
+          <Text style={styles.emptySubtext}>
+            Course registration is currently closed
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={courses}
+          renderItem={renderCourse}
+          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+          contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
-      </View>
-      
-      <FlatList
-        data={filteredCourses}
-        renderItem={renderCourse}
-        keyExtractor={item => item.id}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
-        }
-        contentContainerStyle={styles.list}
-      />
+      )}
+
+      {/* Add Course Button */}
+      <TouchableOpacity style={styles.addButton}>
+        <Ionicons name="add" size={24} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -104,42 +174,56 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.gray[50],
   },
-  header: {
-    padding: 20,
-    backgroundColor: COLORS.primary,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
+  header: {
+    backgroundColor: COLORS.primary,
+    padding: 20,
+    paddingTop: 50,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: '#fff',
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: 14,
-    color: COLORS.white,
+    color: '#fff',
     opacity: 0.8,
     marginTop: 4,
   },
-  search: {
-    padding: 15,
-    backgroundColor: COLORS.white,
+  filterContainer: {
+    backgroundColor: '#fff',
+    padding: 10,
   },
-  searchInput: {
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: COLORS.gray[50],
+  filterChip: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginRight: 10,
   },
-  list: {
+  filterChipActive: {
+    backgroundColor: COLORS.primary,
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  filterTextActive: {
+    color: '#fff',
+  },
+  listContainer: {
     padding: 15,
   },
   courseCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
+    backgroundColor: '#fff',
     padding: 15,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   courseHeader: {
     flexDirection: 'row',
@@ -152,60 +236,62 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
-  status: {
-    paddingHorizontal: 8,
+  statusBadge: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
-  },
-  open: {
-    backgroundColor: COLORS.success + '20',
-  },
-  closed: {
-    backgroundColor: COLORS.error + '20',
+    borderRadius: 12,
   },
   statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  courseTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.gray[800],
-    marginBottom: 8,
-  },
-  courseInfo: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  infoText: {
     fontSize: 12,
-    color: COLORS.gray[600],
+    fontWeight: '600',
+  },
+  courseName: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 10,
   },
   courseFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  courseInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 12,
+    marginRight: 20,
   },
-  enrolled: {
+  courseInfoText: {
     fontSize: 12,
-    color: COLORS.gray[600],
+    color: '#666',
+    marginLeft: 4,
   },
-  enrollButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 15,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: COLORS.primary,
-    borderRadius: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: COLORS.gray[300],
-  },
-  enrollText: {
-    color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
 });

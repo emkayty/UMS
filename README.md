@@ -1,181 +1,154 @@
-# 🎓 University Management System (UMS)
+# 🎓 UMS - University Management System
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Django-4.x-green?style=for-the-badge" alt="Django">
-  <img src="https://img.shields.io/badge/Django_Ninja-API-green?style=for-the-badge" alt="Django Ninja">
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge" alt="Next.js">
-  <img src="https://img.shields.io/badge/React_Native-Expo-blue?style=for-the-badge" alt="React Native">
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge" alt="TypeScript">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
-</p>
-
-A comprehensive **University Management System** built with modern technologies featuring a Django Ninja REST API, Next.js 15 Frontend, and React Native Mobile App.
-
----
-
-## 🚀 Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **API** | Django Ninja (100%) |
-| **Backend** | Django 4.x |
-| **Frontend** | Next.js 15 |
-| **Mobile** | React Native + Expo |
-| **Database** | SQLite/PostgreSQL |
-| **Auth** | JWT |
-
----
+Enterprise-grade University Management System built with Django, Django Ninja, Next.js, and React Native.
 
 ## ✨ Features
 
-- **100% Django Ninja** API (175 endpoints)
-- JWT Authentication
-- Student, Staff, Academic Management
-- Finance & Payments
-- Library & Hostel Management
-- Attendance Tracking
-- Reports & Analytics
-- AI Integration
-- Offline-First Mobile
-- Modern UI/UX (Dark Mode, Glass Effects)
+- **Academic Management** - Faculties, Departments, Programmes, Courses
+- **Student Management** - Admissions, Registrations, Results, Attendance
+- **Staff Management** - Profiles, Leave, Appraisals
+- **Finance** - Fees, Payments, Scholarships, Payroll
+- **Learning** - Materials, Assignments, Quizzes
+- **Communication** - Announcements, Notifications
+- **Reports** - Analytics, Audit Logs
 
----
+## 🏗️ Architecture
 
-## 🚦 Quick Start
+```
+┌─────────────────────────────────────────────┐
+│  Frontend (Next.js 15) :3000               │
+├─────────────────────────────────────────────┤
+│  API (Django + Ninja) :8000                │
+│  ├── accounts    ├── academic   ├── student │
+│  ├── staff       ├── finance    ├── learning│
+│  └── ...                                      │
+├─────────────────────────────────────────────┤
+│  PostgreSQL + Redis + Celery                │
+└─────────────────────────────────────────────┘
+```
 
-### Platform-Specific Setup
+## 🚀 Quick Start
 
-#### 🐧 Linux / 🍎 macOS
 ```bash
 # Backend
 cd backend
-python3 -m venv venv
+python -m venv venv
 source venv/bin/activate
-pip3 install -r requirements.txt
-python3 manage.py migrate
-python3 manage.py runserver
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 
-# Frontend
-cd ../frontend
+# Frontend (separate terminal)
+cd frontend
 npm install
 npm run dev
 ```
 
-#### 🪟 Windows (PowerShell)
-```powershell
-# Backend
-cd backend
-python -m venv venv
-venv\Scripts\Activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-
-# Frontend
-cd ../frontend
-npm install
-npm run dev
-```
-
-#### 🪟 Windows (CMD)
-```cmd
-cd backend
-python -m venv venv
-venv\Scripts\activate.bat
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
-
-> **Note**: For Windows, you may need to install Python from python.org first
-
----
-
-## 🧪 Testing the API
+## 📦 Docker
 
 ```bash
-# Health Check
-curl http://localhost:8000/api/health/
+# Development
+docker-compose up
 
-# Login
-curl -X POST http://localhost:8000/api/v1/accounts/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-
-# API Docs
-# Swagger: http://localhost:8000/api/docs
-# OpenAPI: http://localhost:8000/api/openapi.json
+# Production
+docker-compose -f docker-compose.yml up -d --build
 ```
 
----
+## 🔐 Authentication
 
-## 📊 Project Metrics
+```bash
+# Login
+curl -X POST http://localhost:8000/api/v1/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "password"}'
 
-| Metric | Count |
-|--------|-------|
-| Backend Files | 162 |
-| Frontend Files | 37 |
-| Mobile Files | 20 |
-| API Endpoints | 175 |
-| Django Apps | 12 |
-| Models | 66 |
+# Response
+{
+  "success": true,
+  "access": "eyJ...",
+  "refresh": "eyJ...",
+  "user": {...}
+}
+```
 
----
+## 📚 API Documentation
 
-## 📦 Project Structure
+See [API_REFERENCE.md](API_REFERENCE.md) for complete API documentation.
+
+## 🛠️ Technology Stack
+
+| Component | Technology |
+|------------|------------|
+| Backend | Django 5.x + Django Ninja |
+| Frontend | Next.js 15 + React |
+| Mobile | React Native (Expo) |
+| Database | PostgreSQL |
+| Cache | Redis |
+| Tasks | Celery |
+| Deploy | Docker + Kubernetes |
+
+## 📁 Project Structure
 
 ```
 UMS/
-├── backend/           # Django REST API (12 apps)
-│   ├── apps/         # accounts, academic, student, staff...
-│   └── unicore/     # settings
-├── frontend/        # Next.js 15
-│   └── src/         # app/, components/, lib/
-└── mobile/         # React Native + Expo
-    └── src/        # screens/, navigation/, hooks/
+├── backend/          # Django backend
+│   ├── apps/       # Django apps
+│   ├── unicore/     # Core configuration
+│   └── tests/      # Tests
+├── frontend/        # Next.js frontend
+├── mobile/         # React Native app
+├── k8s/           # Kubernetes manifests
+├── docker-compose.yml
+└── Dockerfile
 ```
 
----
+## 🔧 Environment Variables
 
-## 🌐 API Endpoints Summary
+```env
+DEBUG=False
+SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your-jwt-secret
+POSTGRES_HOST=localhost
+POSTGRES_DB=ums
+POSTGRES_USER=ums
+POSTGRES_PASSWORD=password
+REDIS_URL=redis://localhost:6379/0
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
+```
 
-| App | Endpoints |
-|-----|-----------|
-| accounts | 5 |
-| academic | 22 |
-| student | 24 |
-| staff | 19 |
-| finance | 15 |
-| learning | 22 |
-| Other | 68 |
-| **TOTAL** | **175** |
+## 📋 Available Commands
 
----
+```bash
+# Backend
+python manage.py migrate          # Run migrations
+python manage.py createsuperuser # Create admin
+python manage.py runserver       # Dev server
 
-## 🎨 UI/UX Features
+# Docker
+docker-compose up              # Start all
+docker-compose down           # Stop all
+docker-compose logs -f       # View logs
 
-- Tailwind CSS 4.x
-- Glass Morphism
-- Dark/Light Mode
-- Smooth Animations
-- Loading States
-- Accessible (ARIA)
+# Tests
+pytest                        # Run tests
+```
 
----
+## ✅ Production Checklist
 
-## 📱 Mobile Screens (14)
-
-Dashboard, Login, Profile, Courses, Attendance, Finance, Hostel, Library, Results, Staff, Transcript, Admission, AI, Settings
-
----
+- [ ] Set DEBUG=False
+- [ ] Configure CORS_ALLOWED_ORIGINS
+- [ ] Set strong SECRET_KEY and JWT_SECRET_KEY
+- [ ] Configure PostgreSQL (not SQLite)
+- [ ] Configure Redis
+- [ ] Set up Sentry for error tracking
+- [ ] Configure SSL/HTTPS
+- [ ] Set Allowed_Hosts
 
 ## 📄 License
 
-MIT - see [LICENSE](LICENSE)
+MIT License
 
----
+## 👥 Credits
 
-<p align="center">
-  <strong>Grade: A+ - Production Ready</strong><br>
-  https://github.com/emkayty/UMS
-</p>
+Built with Django, Django Ninja, Next.js, and React Native.

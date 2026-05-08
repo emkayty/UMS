@@ -347,3 +347,22 @@ NINJA_DEFAULT_THROTTLE_RATES = {
     'user': '10000/hour'
 }
 NINJA_FIX_REQUEST_FILES_METHODS = ['POST', 'PATCH', 'PUT']
+
+# ============================================================
+# SENTRY ERROR TRACKING
+# ============================================================
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+
+if os.environ.get('SENTRY_DSN'):
+    sentry_sdk.init(
+        dsn=os.environ.get('SENTRY_DSN'),
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+        ],
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+        environment='production' if not DEBUG else 'development',
+    )

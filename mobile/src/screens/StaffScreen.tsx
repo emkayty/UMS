@@ -1,114 +1,131 @@
 /**
- * UMS Mobile - Staff Screen
- * Staff directory and contact
+ * Staff Screen
+ * Staff portal - API integrated
  */
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Image, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
+import { staffApi } from '../services/api';
 
-interface Staff {
-  id: string;
-  name: string;
-  title: string;
-  department: string;
-  email: string;
-  phone: string;
-  photo?: string;
+interface Props {
+  navigation: any;
 }
 
-const mockStaff: Staff[] = [
-  { id: '1', name: 'Prof. John Smith', title: 'Vice Chancellor', department: 'Administration', email: 'vc@unis versity.edu', phone: '+2348012345678' },
-  { id: '2', name: 'Dr. Sarah Johnson', title: 'Dean, Faculty of Science', department: 'Science', email: 'sarah.j@university.edu', phone: '+2348012345679' },
-  { id: '3', name: 'Prof. Michael Brown', title: 'Head of Computer Science', department: 'Computer Science', email: 'mbrown@university.edu', phone: '+2348012345680' },
-  { id: '4', name: 'Dr. Emily Davis', title: 'Registrar', department: 'Registry', email: 'eregistrar@university.edu', phone: '+2348012345681' },
-  { id: '5', name: 'Mr. David Wilson', title: 'Bursar', department: 'Finance', email: 'bursar@university.edu', phone: '+2348012345682' },
-  { id: '6', name: 'Mrs. Jennifer Lee', title: 'Librarian', department: 'Library', email: 'library@university.edu', phone: '+2348012345683' },
-];
+export function StaffScreen({ navigation }: Props) {
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [leaveBalance, setLeaveBalance] = useState<any>(null);
 
-export default function StaffScreen() {
-  const [staff, setStaff] = useState<Staff[]>(mockStaff);
-  const [search, setSearch] = useState('');
-  const [selectedDept, setSelectedDept] = useState<string | null>(null);
+  useEffect(() => {
+    loadStaff();
+  }, []);
 
-  const departments = [...new Set(staff.map(s => s.department))];
+  const loadStaff = async () => {
+    try {
+      const profileRes = await staffApi.profile();
+      if (profileRes.success) {
+        setProfile(profileRes.data);
+      }
 
-  const filteredStaff = staff.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.title.toLowerCase().includes(search.toLowerCase());
-    const matchesDept = !selectedDept || s.department === selectedDept;
-    return matchesSearch && matchesDept;
-  });
-
-  const handleCall = (phone: string) => {
-    Linking.openURL(`tel:${phone}`);
+      const leaveRes = await staffApi.leaveBalance();
+      if (leaveRes.success) {
+        setLeaveBalance(leaveRes.data);
+      }
+    } catch (error) {
+      console.error('Load staff error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEmail = (email: string) => {
-    Linking.openURL(`mailto:${email}`);
-  };
+  const menuItems = [
+    { icon: 'people', label: 'Students', screen: 'Students', color: '#3b82f6' },
+    { icon: 'book', label: 'Courses', screen: 'Courses', color: '#22c55e' },
+    { icon: 'document-text', label: 'Results', screen: 'Results', color: '#f59e0b' },
+    { icon: 'calendar', label: 'Attendance', screen: 'Attendance', color: '#8b5cf6' },
+    { icon: 'wallet', label: 'Payments', screen: 'Payments', color: '#ec4899' },
+    { icon: 'school', label: 'Clearance', screen: 'Clearance', color: '#f97316' },
+  ];
 
-  const renderStaff = ({ item }: { item: Staff }) => (
-    <View style={styles.staffCard}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
       </View>
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.department}>{item.department}</Text>
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleCall(item.phone)}>
-            <Text style={styles.actionText}>📞 Call</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleEmail(item.email)}>
-            <Text style={styles.actionText}>✉️ Email</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Staff Directory</Text>
-        <Text style={styles.subtitle}>{staff.length} staff members</Text>
+        <Text style={styles.headerTitle}>Staff Portal</Text>
+        <Text style={styles.headerSubtitle}>
+          {profile?.title || 'Lecturer'} {profile?.name || ''}
+        </Text>
       </View>
-      
-      <View style={styles.search}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search staff..."
-          value={search}
-          onChangeText={setSearch}
-        />
+
+      {/* Quick Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <Ionicons name="calendar" size={24} color="#3b82f6" />
+          <Text style={styles.statValue}>{leaveBalance?.days_left || 0}</Text>
+          <Text style={styles.statLabel}>Leave Days</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="book" size={24} color="#22c55e" />
+          <Text style={styles.statValue}>{profile?.courses || 0}</Text>
+          <Text style={styles.statLabel}>Courses</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="people" size={24} color="#f59e0b" />
+          <Text style={styles.statValue}>{profile?.students || 0}</Text>
+          <Text style={styles.statLabel}>Students</Text>
+        </View>
       </View>
-      
-      <View style={styles.filters}>
-        <FlatList
-          horizontal
-          data={departments}
-          keyExtractor={item => item}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.filter, selectedDept === item && styles.filterActive]}
-              onPress={() => setSelectedDept(selectedDept === item ? null : item)}
-            >
-              <Text style={[styles.filterText, selectedDept === item && styles.filterTextActive]}>
-                {item}
-              </Text>
+
+      {/* Menu */}
+      <ScrollView style={styles.content}>
+        <Text style={styles.sectionTitle}>quick Access</Text>
+        <View style={styles.menuGrid}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity key={index} style={styles.menuCard}>
+              <View style={[styles.menuIcon, { backgroundColor: item.color + '20' }]}>
+                <Ionicons name={item.icon as any} size={24} color={item.color} />
+              </View>
+              <Text style={styles.menuLabel}>{item.label}</Text>
             </TouchableOpacity>
-          )}
-        />
-      </View>
-      
-      <FlatList
-        data={filteredStaff}
-        renderItem={renderStaff}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
-      />
+          ))}
+        </View>
+
+        {/* Leave Section */}
+        <Text style={styles.sectionTitle}>Leave Management</Text>
+        <View style={styles.leaveCard}>
+          <View style={styles.leaveRow}>
+            <Text style={styles.leaveLabel}>Annual Leave</Text>
+            <Text style={styles.leaveValue}>{leaveBalance?.annual || 0} days</Text>
+          </View>
+          <View style={styles.leaveRow}>
+            <Text style={styles.leaveLabel}>Sick Leave</Text>
+            <Text style={styles.leaveValue}>{leaveBalance?.sick || 0} days</Text>
+          </View>
+          <View style={styles.leaveRow}>
+            <Text style={styles.leaveLabel}>Casual Leave</Text>
+            <Text style={styles.leaveValue}>{leaveBalance?.casual || 0} days</Text>
+          </View>
+          <TouchableOpacity style={styles.requestLeaveButton}>
+            <Text style={styles.requestLeaveText}>Request Leave</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -118,113 +135,112 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.gray[50],
   },
-  header: {
-    padding: 20,
-    backgroundColor: COLORS.primary,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.white,
-    opacity: 0.8,
-    marginTop: 4,
-  },
-  search: {
-    padding: 15,
-    backgroundColor: COLORS.white,
-  },
-  searchInput: {
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: COLORS.gray[50],
-  },
-  filters: {
-    paddingHorizontal: 15,
-    paddingBottom: 10,
-  },
-  filter: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  filterActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterText: {
-    fontSize: 12,
-    color: COLORS.gray[600],
-  },
-  filterTextActive: {
-    color: COLORS.white,
-  },
-  list: {
-    padding: 15,
-  },
-  staffCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: COLORS.primary,
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: {
-    fontSize: 20,
+  header: {
+    backgroundColor: COLORS.primary,
+    padding: 20,
+    paddingTop: 50,
+  },
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: '#fff',
   },
-  info: {
-    flex: 1,
-    marginLeft: 12,
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
   },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.gray[800],
-  },
-  title: {
-    fontSize: 13,
-    color: COLORS.gray[600],
-    marginTop: 2,
-  },
-  department: {
-    fontSize: 12,
-    color: COLORS.primary,
-    marginTop: 4,
-  },
-  actions: {
+  statsContainer: {
     flexDirection: 'row',
-    marginTop: 10,
-    gap: 10,
+    backgroundColor: '#fff',
+    margin: 15,
+    borderRadius: 12,
+    padding: 15,
   },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: COLORS.gray[50],
-    borderRadius: 6,
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
   },
-  actionText: {
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 8,
+  },
+  statLabel: {
     fontSize: 12,
-    color: COLORS.gray[700],
+    color: '#666',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 15,
+  },
+  menuGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  menuCard: {
+    width: '31%',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  menuIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuLabel: {
+    fontSize: 12,
+    color: '#333',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  leaveCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  leaveRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  leaveLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  leaveValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  requestLeaveButton: {
+    backgroundColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  requestLeaveText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });

@@ -30,3 +30,23 @@ scipy>=1.10
 celery>=5.3
 redis>=5.0
 flower>=2.0  # Celery monitoring
+
+
+# Monitoring & Error Tracking
+sentry-sdk>=1.40.0
+django-ratelimit>=4.1.0
+
+# WebSocket Support
+channels>=4.0.0
+channels-redis>=4.2.0
+daphne>=4.0.0
+
+# Search Engine
+django-elasticsearch>=8.4.0
+elasticsearch>=8.0.0
+
+# Caching
+django-redis>=5.4.0
+
+# API Documentation
+drf-spectacular>=0.27.0

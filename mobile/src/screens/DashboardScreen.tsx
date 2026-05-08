@@ -1,103 +1,233 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, Dimensions } from 'react-native'
+/**
+ * Dashboard Screen
+ * Main dashboard with stats and quick actions - API integrated
+ */
 
-const { width } = Dimensions.get('window')
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../config';
+import { authApi, studentApi } from '../services/api';
 
-interface Props { navigation: any }
+interface Props {
+  navigation: any;
+}
 
 export function DashboardScreen({ navigation }: Props) {
-  const [fadeAnim] = useState(new Animated.Value(0))
-  const [scaleAnim] = useState(new Animated.Value(0.9))
-  
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
-    ]).start()
-  }, [])
-  
-  const stats = [
-    { label: 'GPA', value: 3.75, color: '#22c55e', icon: '📊' },
-    { label: 'Courses', value: 5, color: '#3b82f6', icon: '📚' },
-    { label: 'Due', value: 2, color: '#f59e0b', icon: '📝' },
-    { label: 'Msgs', value: 3, color: '#8b5cf6', icon: '💬' },
-  ]
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
 
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const loadDashboard = async () => {
+    try {
+      // Load user info
+      const userRes = await authApi.me();
+      if (userRes.success) {
+        setUser(userRes.data);
+      }
+
+      // Load student profile
+      const profileRes = await studentApi.profile();
+      if (profileRes.success) {
+        setProfile(profileRes.data);
+      }
+    } catch (error) {
+      console.error('Load error:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadDashboard();
+  };
+
+  // Stats from profile data
+  const stats = [
+    { label: 'GPA', value: profile?.cgpa || '0.0', color: '#22c55e', icon: 'school' },
+    { label: 'Courses', value: profile?.current_courses || '0', color: '#3b82f6', icon: 'book' },
+    { label: 'Due', value: profile?.fees_due || '0', color: '#f59e0b', icon: 'document-text' },
+    { label: 'Msgs', value: profile?.unread_messages || '0', color: '#8b5cf6', icon: 'chatbubble' },
+  ];
+
+  // Quick actions
   const quickActions = [
-    { label: 'Courses', icon: '📚', screen: 'Courses', color: '#3b82f6' },
-    { label: 'Results', icon: '📊', screen: 'Results', color: '#22c55e' },
-    { label: 'Attendance', icon: '📱', screen: 'Attendance', color: '#f59e0b' },
-    { label: 'Finance', icon: '💰', screen: 'Finance', color: '#8b5cf6' },
-    { label: 'Library', icon: '📖', screen: 'Library', color: '#ef4444' },
-    { label: 'Clearance', icon: '🎓', screen: 'Clearance', color: '#06b6d4' },
-  ]
+    { label: 'Courses', icon: 'book', screen: 'Courses', color: '#3b82f6' },
+    { label: 'Results', icon: 'school', screen: 'Results', color: '#22c55e' },
+    { label: 'Attendance', icon: 'finger-print', screen: 'Attendance', color: '#f59e0b' },
+    { label: 'Finance', icon: 'wallet', screen: 'Finance', color: '#8b5cf6' },
+    { label: 'Library', icon: 'library', screen: 'Library', color: '#ec4899' },
+    { label: 'Hostel', icon: 'home', screen: 'Hostel', color: '#f97316' },
+  ];
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ scale: scaleAnim }]}]}>
-        <Text style={styles.greeting}>Welcome back! 👋</Text>
-        <Text style={styles.role}>Student • Year 2</Text>
-        <View style={styles.sessionBadge}>
-          <Text style={styles.sessionText}>2024/2025 Session</Text>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Welcome back,</Text>
+          <Text style={styles.userName}>
+            {user?.first_name || user?.name || 'Student'}
+          </Text>
+          <Text style={styles.level}>
+            {profile?.current_level || '100'} Level
+          </Text>
         </View>
-      </Animated.View>
+        <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+          <Ionicons name="person-circle" size={50} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
-      <Animated.View style={{ opacity: fadeAnim, marginTop: -8 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
-          {stats.map((stat, index) => (
-            <Animated.View 
-              key={stat.label} 
-              style={[
-                styles.statCard, 
-                { borderLeftColor: stat.color },
-                { transform: [{ translateY: index * 10 }] }
-              ]}
-            >
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-            </Animated.View>
-          ))}
-        </ScrollView>
-      </Animated.View>
+      {/* Stats */}
+      <View style={styles.statsContainer}>
+        {stats.map((stat, index) => (
+          <View key={index} style={styles.statCard}>
+            <Ionicons name={stat.icon as any} size={20} color={stat.color} />
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+          </View>
+        ))}
+      </View>
 
+      {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       <View style={styles.actionsGrid}>
         {quickActions.map((action, index) => (
           <TouchableOpacity
-            key={action.label}
-            style={[styles.actionCard, { backgroundColor: action.color + '10' }]}
+            key={index}
+            style={styles.actionCard}
             onPress={() => navigation.navigate(action.screen)}
-            activeOpacity={0.7}
           >
-            <View style={[styles.actionIconBg, { backgroundColor: action.color + '20' }]}>
-              <Text style={styles.actionIcon}>{action.icon}</Text>
+            <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
+              <Ionicons name={action.icon as any} size={24} color={action.color} />
             </View>
-            <Text style={[styles.actionLabel, { color: action.color }]}>{action.label}</Text>
+            <Text style={styles.actionLabel}>{action.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <View style={styles.bottomSpacer} />
+      <Text style={styles.version}>Version 2.0.0</Text>
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  header: { backgroundColor: '#1e40af', padding: 24, paddingTop: 20, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, marginBottom: 16 },
-  greeting: { color: 'white', fontSize: 28, fontWeight: 'bold' },
-  role: { color: '#bfdbfe', fontSize: 14, marginTop: 4 },
-  sessionBadge: { alignSelf: 'flex-start', marginTop: 12, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 20 },
-  sessionText: { color: 'white', fontSize: 12, fontWeight: '600' },
-  statsScroll: { paddingHorizontal: 16, gap: 12 },
-  statCard: { backgroundColor: 'white', borderRadius: 16, padding: 16, minWidth: width * 0.35, borderLeftWidth: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  statValue: { fontSize: 28, fontWeight: 'bold', color: '#1f2937' },
-  statLabel: { fontSize: 12, color: '#6b7280', marginTop: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1f2937', marginHorizontal: 16, marginTop: 20, marginBottom: 12 },
-  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 12 },
-  actionCard: { borderRadius: 16, padding: 16, alignItems: 'center', width: '30%', aspectRatio: 1 },
-  actionIconBg: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  actionIcon: { fontSize: 20 },
-  actionLabel: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
-  bottomSpacer: { height: 100 },
-})
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.gray[50],
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    backgroundColor: COLORS.primary,
+    padding: 20,
+    paddingTop: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  greeting: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  level: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 15,
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginHorizontal: 15,
+    marginTop: 10,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 10,
+  },
+  actionCard: {
+    width: '31%',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 12,
+    margin: 5,
+    alignItems: 'center',
+  },
+  actionIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionLabel: {
+    fontSize: 11,
+    color: '#333',
+    marginTop: 5,
+  },
+  version: {
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 30,
+    color: '#999',
+  },
+});
