@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Third party
     # 'rest_framework',
     'corsheaders',
+    'channels',  # WebSocket support
     # Local apps
     'apps.accounts',
     'apps.institution',
@@ -366,3 +367,31 @@ if os.environ.get('SENTRY_DSN'):
         send_default_pii=False,
         environment='production' if not DEBUG else 'development',
     )
+
+# ============================================================
+# CHANNELS / WEBSOCKET CONFIGURATION
+# ============================================================
+# Channel layers for WebSocket support
+# In production, use Redis for channel layer
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'CONFIG': {
+            'capacity': 2048,
+        'delivery_timeout': 60,
+        },
+    }
+}
+
+# Fallback to Redis in production when available
+if os.environ.get('REDIS_URL') and not DEBUG:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379/2')],
+                'heartbeat_interval': 30,
+                'capacity': 4096,
+            },
+        }
+    }
