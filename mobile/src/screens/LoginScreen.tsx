@@ -1,6 +1,6 @@
 /**
  * Login Screen
- * User authentication
+ * User authentication with API integration
  */
 
 import React, { useState } from 'react';
@@ -17,44 +17,40 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
+import { authApi } from '../services/api';
+import { saveToken } from '../services/storage';
 
 export function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const handleLogin = async () => {
     if (!email || !password) {
       setError('Please enter email and password');
       return;
     }
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok && data.token) {
-        // Navigate to dashboard
+      const result = await authApi.login(email, password);
+
+      if (result.success && result.data?.access) {
+        await saveToken(result.data.access);
         navigation.replace('Dashboard');
       } else {
-        setError(data.error || 'Invalid credentials');
+        setError(result.error || 'Invalid credentials');
       }
-    } catch (err) {
-      setError('Connection failed. Check your network.');
+    } catch (err: any) {
+      setError(err.message || 'Connection failed. Check your network.');
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -66,10 +62,10 @@ export function LoginScreen({ navigation }: any) {
           <Text style={styles.title}>UniCore</Text>
           <Text style={styles.subtitle}>University Management</Text>
         </View>
-        
+
         <View style={styles.form}>
           <Text style={styles.error}>{error}</Text>
-          
+
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color={COLORS.gray[500]} />
             <TextInput
@@ -79,10 +75,10 @@ export function LoginScreen({ navigation }: any) {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              autoCorrect={false}
+              autoComplete="email"
             />
           </View>
-          
+
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color={COLORS.gray[500]} />
             <TextInput
@@ -91,29 +87,32 @@ export function LoginScreen({ navigation }: any) {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoCapitalize="none"
             />
           </View>
-          
+
+          <TouchableOpacity style={styles.forgotButton}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
-            style={styles.button}
+            style={styles.loginButton}
             onPress={handleLogin}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color={COLORS.white} />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={styles.loginText}>Login</Text>
             )}
           </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Need help? Contact ICT Support
+            </Text>
+          </View>
         </View>
-        
-        <View style={styles.footer}>
-          <TouchableOpacity>
-            <Text style={styles.link}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.version}>Version 2.0.0</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -126,8 +125,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
     justifyContent: 'center',
+    padding: 20,
   },
   logoContainer: {
     alignItems: 'center',
@@ -141,25 +140,24 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: COLORS.gray[500],
+    color: COLORS.gray[600],
+    marginTop: 5,
   },
   form: {
-    marginBottom: 20,
+    width: '100%',
   },
   error: {
     color: COLORS.error,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.gray[50],
-    borderRadius: 12,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   input: {
     flex: 1,
@@ -167,29 +165,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.gray[900],
   },
-  button: {
+  forgotButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 20,
+  },
+  forgotText: {
+    color: COLORS.primary,
+    fontSize: 14,
+  },
+  loginButton: {
     backgroundColor: COLORS.primary,
     padding: 18,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
   },
-  buttonText: {
+  loginText: {
     color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
   },
   footer: {
+    marginTop: 30,
     alignItems: 'center',
   },
-  link: {
-    color: COLORS.primary,
+  footerText: {
+    color: COLORS.gray[500],
     fontSize: 14,
-  },
-  version: {
-    textAlign: 'center',
-    marginTop: 30,
-    color: COLORS.gray[400],
-    fontSize: 12,
   },
 });

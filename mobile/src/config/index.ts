@@ -18,8 +18,14 @@ const CONFIG = {
   // Pagination
   PAGE_SIZE: 20,
   
-  // Timeouts
-  REQUEST_TIMEOUT: 30000,
+  // Timeouts - Optimized for Nigerian network conditions
+  REQUEST_TIMEOUT: 60000,  // 60 seconds for slow networks
+  CONNECT_TIMEOUT: 30000,  // 30 seconds for connection
+  
+  // Retry configuration for unstable networks
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 2000,  // 2 seconds initial delay
+  RETRY_BACKOFF: 2,  // Exponential backoff multiplier
   
   // Feature Flags
   FEATURES: {

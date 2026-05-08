@@ -386,3 +386,45 @@ def get_current_session(request):
     if current:
         return {'id': current.id, 'year': current.year, 'name': current.name}
     return {'message': 'No current session'}
+# ============================================================
+# HEALTH CHECK ENDPOINT
+# ============================================================
+
+from datetime import datetime
+from django.db import connection
+from django.core.cache import cache
+
+class HealthSchema(Schema):
+    status: str
+    timestamp: str
+    database: str
+    cache: str
+
+@router.get('/health', response=HealthSchema)
+def health_check(request):
+    """Health check endpoint for container orchestration"""
+    
+    # Check database
+    db_status = "healthy"
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        db_status = "unhealthy"
+    
+    # Check cache
+    cache_status = "healthy"
+    try:
+        cache.set('health_check', 'ok', 10)
+        cache.get('health_check')
+    except Exception:
+        cache_status = "unhealthy"
+    
+    overall_status = "healthy" if db_status == "healthy" else "degraded"
+    
+    return {
+        "status": overall_status,
+        "timestamp": datetime.now().isoformat(),
+        "database": db_status,
+        "cache": cache_status,
+    }

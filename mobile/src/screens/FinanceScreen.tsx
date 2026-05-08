@@ -1,152 +1,246 @@
 /**
  * Finance Screen
- * View fees and make payments
+ * Student fees and payments - API integrated
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
-  TouchableOpacity,
+  FlatList,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
-import { financeApi } from '../services/api';
+import { studentApi } from '../services/api';
 
-export function FinanceScreen() {
+interface Props {
+  navigation: any;
+}
+
+interface Fee {
+  id: number;
+  name: string;
+  amount: number;
+  due_date: string;
+  status: string;
+}
+
+interface Payment {
+  id: number;
+  amount: number;
+  date: string;
+  reference: string;
+  status: string;
+}
+
+export function FinanceScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
-  const [invoices, setInvoices] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  
-  const loadData = async () => {
+  const [fees, setFees] = useState<Fee[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [selectedTab, setSelectedTab] = useState('fees');
+
+  useEffect(() => {
+    loadFinance();
+  }, []);
+
+  const loadFinance = async () => {
     try {
-      const response = await financeApi.invoices();
-      if (response.success) {
-        setInvoices(response.data || []);
+      // Load fees
+      const feesResult = await studentApi.fees();
+      if (feesResult.success) {
+        const feesData = Array.isArray(feesResult.data) ? feesResult.data : feesResult.data.results || [];
+        setFees(feesData);
+      }
+
+      // Load payments
+      const paymentsResult = await studentApi.payments();
+      if (paymentsResult.success) {
+        const paymentsData = Array.isArray(paymentsResult.data) ? paymentsResult.data : paymentsResult.data.results || [];
+        setPayments(paymentsData);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Load finance error:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
-  
-  const onRefresh = async () => {
+
+  const onRefresh = () => {
     setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
+    loadFinance();
   };
-  
-  useEffect(() => {
-    loadData();
-  }, []);
-  
-  const formatCurrency = (amount: number) => {
-    return `₦${amount.toLocaleString()}`;
-  };
-  
+
+  // Calculate totals
+  const totalFees = fees.reduce((sum, f) => sum + f.amount, 0);
+  const paidFees = fees.filter(f => f.status === 'paid').reduce((sum, f) => sum + f.amount, 0);
+  const pendingFees = fees.filter(f => f.status !== 'paid').reduce((sum, f) => sum + f.amount, 0);
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'paid':
-        return COLORS.success;
-      case 'partial':
-        return COLORS.warning;
-      default:
-        return COLORS.error;
+      case 'success': return '#22c55e';
+      case 'pending': return '#f59e0b';
+      case 'failed': return '#ef4444';
+      default: return '#666';
     }
   };
-  
+
+  const renderFee = ({ item }: { item: Fee }) => (
+    <View style={styles.itemCard}>
+      <View style={styles.itemHeader}>
+        <View>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemDate}>Due: {item.due_date || 'N/A'}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+            {item.status || 'Pending'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.itemFooter}>
+        <Text style={styles.itemAmount}>
+          ₦{item.amount?.toLocaleString() || '0'}
+        </Text>
+        {item.status !== 'paid' && (
+          <TouchableOpacity style={styles.payButton}>
+            <Text style={styles.payButtonText}>Pay Now</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderPayment = ({ item }: { item: Payment }) => (
+    <View style={styles.itemCard}>
+      <View style={styles.itemHeader}>
+        <View>
+          <Text style={styles.itemName}>Payment</Text>
+          <Text style={styles.itemDate}>Ref: {item.reference || item.id}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+            {item.status || 'Success'}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.itemFooter}>
+        <Text style={[styles.itemAmount, { color: '#22c55e' }]}>
+          ₦{item.amount?.toLocaleString() || '0'}
+        </Text>
+        <Text style={styles.itemDate}>{item.date}</Text>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <Text>Loading...</Text>
+      <View style={styles.loadingContainer}>
+        <Text>Loading finance...</Text>
       </View>
     );
   }
-  
+
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Finance</Text>
-        <Text style={styles.subtitle}>Fees and Payments</Text>
-      </View>
-      
-      {/* Summary Card */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Due</Text>
-          <Text style={styles.summaryValue}>
-            {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.amount_due || 0), 0))}
-          </Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Paid</Text>
-          <Text style={[styles.summaryValue, { color: COLORS.success }]}>
-            {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.amount_paid || 0), 0))}
-          </Text>
-        </View>
-      </View>
-      
-      {/* Invoices List */}
-      <Text style={styles.sectionTitle}>Invoices</Text>
-      
-      {!invoices.length ? (
-        <View style={styles.empty}>
-          <Ionicons name="receipt-outline" size={48} color={COLORS.gray[300]} />
-          <Text style={styles.emptyText}>No invoices found</Text>
-        </View>
-      ) : (
-        invoices.map((invoice, index) => (
-          <View key={index} style={styles.invoiceCard}>
-            <View style={styles.invoiceHeader}>
-              <View>
-                <Text style={styles.invoiceName}>{invoice.name || 'Fee'}</Text>
-                <Text style={styles.invoiceDate}>{invoice.session || '2024/2025'}</Text>
-              </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(invoice.status) + '20' }
-              ]}>
-                <Text style={[
-                  styles.statusText,
-                  { color: getStatusColor(invoice.status) }
-                ]}>
-                  {invoice.status?.toUpperCase() || 'PENDING'}
-                </Text>
-              </View>
+        <Text style={styles.headerTitle}>Finance</Text>
+        
+        {/* Summary Card */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Total Fees</Text>
+              <Text style={styles.summaryValue}>₦{totalFees.toLocaleString()}</Text>
             </View>
-            
-            <View style={styles.invoiceAmount}>
-              <Text style={styles.amountLabel}>Amount Due</Text>
-              <Text style={styles.amountValue}>{formatCurrency(invoice.amount_due || 0)}</Text>
-            </View>
-            
-            <View style={styles.invoiceAmount}>
-              <Text style={styles.amountLabel}>Amount Paid</Text>
-              <Text style={[styles.amountValue, { color: COLORS.success }]}>
-                {formatCurrency(invoice.amount_paid || 0)}
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Paid</Text>
+              <Text style={[styles.summaryValue, { color: '#22c55e' }]}>
+                ₦{totalPaid.toLocaleString()}
               </Text>
             </View>
-            
-            {invoice.status !== 'paid' && (
-              <TouchableOpacity style={styles.payButton}>
-                <Ionicons name="card" size={18} color={COLORS.white} />
-                <Text style={styles.payButtonText}>Pay Now</Text>
-              </TouchableOpacity>
-            )}
           </View>
-        ))
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Balance</Text>
+              <Text style={[styles.summaryValue, { color: pendingFees > 0 ? '#ef4444' : '#22c55e' }]}>
+                ₦{pendingFees.toLocaleString()}
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>Status</Text>
+              <Text style={[styles.summaryValue, { color: pendingFees > 0 ? '#f59e0b' : '#22c55e' }]}>
+                {pendingFees > 0 ? 'Outstanding' : 'Cleared'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'fees' && styles.tabActive]}
+          onPress={() => setSelectedTab('fees')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'fees' && styles.tabTextActive]}>
+            Fees ({fees.length})
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'payments' && styles.tabActive]}
+          onPress={() => setSelectedTab('payments')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'payments' && styles.tabTextActive]}>
+            Payments ({payments.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      {selectedTab === 'fees' ? (
+        fees.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="wallet-outline" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>No fees</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={fees}
+            renderItem={renderFee}
+            keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+        )
+      ) : (
+        payments.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="receipt-outline" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>No payments</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={payments}
+            renderItem={renderPayment}
+            keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+        )
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -155,88 +249,92 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.gray[50],
   },
-  centered: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
-    padding: 20,
     backgroundColor: COLORS.primary,
+    padding: 20,
+    paddingTop: 50,
   },
-  title: {
-    fontSize: 28,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.white,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.white,
-    opacity: 0.8,
+    color: '#fff',
+    marginBottom: 15,
   },
   summaryCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    margin: 15,
-    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
-    elevation: 2,
+    padding: 15,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   summaryItem: {
     flex: 1,
-    alignItems: 'center',
   },
   summaryLabel: {
     fontSize: 12,
-    color: COLORS.gray[500],
-    marginBottom: 5,
+    color: '#fff',
+    opacity: 0.8,
   },
   summaryValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.gray[900],
-  },
-  divider: {
-    width: 1,
-    backgroundColor: COLORS.gray[200],
-    marginVertical: 5,
-  },
-  sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.gray[900],
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
     margin: 15,
+    borderRadius: 10,
+    padding: 4,
   },
-  empty: {
+  tab: {
+    flex: 1,
+    padding: 12,
     alignItems: 'center',
-    padding: 40,
+    borderRadius: 8,
   },
-  emptyText: {
-    marginTop: 10,
-    color: COLORS.gray[400],
+  tabActive: {
+    backgroundColor: COLORS.primary,
   },
-  invoiceCard: {
-    backgroundColor: COLORS.white,
-    marginHorizontal: 15,
-    marginBottom: 15,
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  listContainer: {
+    padding: 15,
+    paddingTop: 0,
+  },
+  itemCard: {
+    backgroundColor: '#fff',
     padding: 15,
     borderRadius: 12,
-    elevation: 2,
+    marginBottom: 10,
   },
-  invoiceHeader: {
+  itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
-  invoiceName: {
+  itemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.gray[900],
+    color: '#333',
   },
-  invoiceDate: {
+  itemDate: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: '#666',
     marginTop: 2,
   },
   statusBadge: {
@@ -245,35 +343,38 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
   },
-  invoiceAmount: {
+  itemFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'center',
   },
-  amountLabel: {
-    fontSize: 14,
-    color: COLORS.gray[500],
-  },
-  amountValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.gray[900],
+  itemAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   payButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
   payButtonText: {
-    color: COLORS.white,
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 15,
   },
 });

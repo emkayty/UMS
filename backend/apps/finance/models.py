@@ -158,11 +158,15 @@ class StudentFee(models.Model):
 
 
 class Payment(models.Model):
-    """Payment records."""
+    """Payment records with idempotency support."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     student = models.ForeignKey(
         'student.StudentProfile', on_delete=models.CASCADE,
         related_name='payments'
+    )
+    fee_item = models.ForeignKey(
+        FeeItem, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='payments'
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_ref = models.CharField(max_length=50, unique=True)
@@ -170,6 +174,9 @@ class Payment(models.Model):
     status = models.CharField(
         max_length=20, choices=PaymentStatus.choices,
         default=PaymentStatus.PENDING
+    )
+    idempotency_key = models.CharField(
+        max_length=100, unique=True, null=True, blank=True
     )
     paid_at = models.DateTimeField(null=True, blank=True)
     invoice_url = models.URLField(blank=True)

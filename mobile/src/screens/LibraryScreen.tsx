@@ -1,118 +1,159 @@
 /**
- * UMS Mobile - Library Screen
- * Library services and book search
+ * Library Screen
+ * Library services - API integrated
  */
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
+import { learningApi } from '../services/api';
+
+interface Props {
+  navigation: any;
+}
 
 interface Book {
-  id: string;
+  id: number;
   title: string;
   author: string;
   isbn: string;
-  category: string;
-  available: number;
-  total: number;
+  available: boolean;
 }
 
-const mockBooks: Book[] = [
-  { id: '1', title: 'Introduction to Algorithms', author: 'Cormen et al.', isbn: '978-0262033848', category: 'Computer Science', available: 3, total: 5 },
-  { id: '2', title: 'Clean Code', author: 'Robert Martin', isbn: '978-0132350884', category: 'Computer Science', available: 2, total: 4 },
-  { id: '3', title: 'Calculus: Early Transcendentals', author: 'James Stewart', isbn: '978-1285741550', category: 'Mathematics', available: 5, total: 8 },
-  { id: '4', title: 'Physics for Scientists', author: 'Serway', isbn: '978-1305079127', category: 'Physics', available: 4, total: 6 },
-  { id: '5', title: 'Organic Chemistry', author: 'Paula Bruice', isbn: '978-0134042282', category: 'Chemistry', available: 1, total: 3 },
-];
+export function LibraryScreen({ navigation }: Props) {
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [borrowed, setBorrowed] = useState<any[]>([]);
+  const [selectedTab, setSelectedTab] = useState('books');
 
-interface BorrowedBook {
-  id: string;
-  title: string;
-  dueDate: string;
-  status: 'active' | 'overdue';
-}
+  useEffect(() => {
+    loadLibrary();
+  }, []);
 
-const mockBorrowed: BorrowedBook[] = [
-  { id: '1', title: 'Clean Code', dueDate: '2026-05-10', status: 'active' },
-];
+  const loadLibrary = async () => {
+    try {
+      const result = await learningApi.materials();
+      if (result.success) {
+        const data = Array.isArray(result.data) ? result.data : result.data.results || [];
+        setMaterials(data);
+      }
+    } catch (error) {
+      console.error('Load library error:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-export default function LibraryScreen() {
-  const [search, setSearch] = useState('');
-  const [books, setBooks] = useState<Book[]>(mockBooks);
-  const [borrowed, setBorrowed] = useState<BorrowedBook[]>(mockBorrowed);
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadLibrary();
+  };
 
-  const filteredBooks = books.filter(b => 
-    b.title.toLowerCase().includes(search.toLowerCase()) ||
-    b.author.toLowerCase().includes(search.toLowerCase())
+  const filteredBooks = materials.filter((b: Book) =>
+    b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    b.author?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const renderBook = ({ item }: { item: Book }) => (
     <View style={styles.bookCard}>
       <View style={styles.bookInfo}>
         <Text style={styles.bookTitle}>{item.title}</Text>
-        <Text style={styles.author}>{item.author}</Text>
-        <Text style={styles.isbn}>{item.isbn}</Text>
+        <Text style={styles.bookAuthor}>{item.author}</Text>
         <View style={styles.bookMeta}>
-          <Text style={styles.category}>{item.category}</Text>
-          <Text style={[styles.available, item.available === 0 && styles.unavailable]}>
-            {item.available > 0 ? `${item.available} available` : 'Unavailable'}
-          </Text>
+          <Ionicons name="bookmark-outline" size={14} color="#666" />
+          <Text style={styles.bookMetaText}>{item.isbn}</Text>
         </View>
       </View>
-      <TouchableOpacity 
-        style={[styles.borrowButton, item.available === 0 && styles.buttonDisabled]}
-        disabled={item.available === 0}
-      >
-        <Text style={styles.borrowText}>Borrow</Text>
-      </TouchableOpacity>
+      <View style={[styles.availabilityBadge, { backgroundColor: item.available ? '#d1fae5' : '#fee2e2' }]}>
+        <Text style={[styles.availabilityText, { color: item.available ? '#065f46' : '#991b1b' }]}>
+          {item.available ? 'Available' : 'Not Available'}
+        </Text>
+      </View>
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading library...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Library</Text>
-        <Text style={styles.subtitle}>Search & borrow books</Text>
+        <Text style={styles.headerTitle}>Library</Text>
       </View>
 
-      <ScrollView>
-        {/* My Borrowed Books */}
-        {borrowed.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Borrowed Books</Text>
-            {borrowed.map(book => (
-              <View key={book.id} style={styles.borrowedCard}>
-                <Text style={styles.borrowedTitle}>{book.title}</Text>
-                <Text style={styles.dueDate}>Due: {book.dueDate}</Text>
-                <View style={[styles.status, book.status === 'overdue' && styles.overdue]}>
-                  <Text style={styles.statusText}>{book.status.toUpperCase()}</Text>
-                </View>
-              </View>
-            ))}
+      {/* Search */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search books..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'books' && styles.tabActive]}
+          onPress={() => setSelectedTab('books')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'books' && styles.tabTextActive]}>
+            Books
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, selectedTab === 'borrowed' && styles.tabActive]}
+          onPress={() => setSelectedTab('borrowed')}
+        >
+          <Text style={[styles.tabText, selectedTab === 'borrowed' && styles.tabTextActive]}>
+            Borrowed ({borrowed.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      {selectedTab === 'books' ? (
+        filteredBooks.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="book-outline" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>No books found</Text>
           </View>
-        )}
-
-        {/* Search */}
-        <View style={styles.searchSection}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search books by title or author..."
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-
-        {/* Book List */}
-        <View style={styles.booksSection}>
-          <Text style={styles.sectionTitle}>All Books ({books.length})</Text>
+        ) : (
           <FlatList
             data={filteredBooks}
             renderItem={renderBook}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
+            keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
           />
+        )
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="bookmarks-outline" size={60} color="#ccc" />
+          <Text style={styles.emptyText}>No borrowed books</Text>
         </View>
-      </ScrollView>
+      )}
     </View>
   );
 }
@@ -122,130 +163,112 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.gray[50],
   },
-  header: {
-    padding: 20,
-    backgroundColor: COLORS.primary,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
+  header: {
+    backgroundColor: COLORS.primary,
+    padding: 20,
+    paddingTop: 50,
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: '#fff',
   },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.white,
-    opacity: 0.8,
-    marginTop: 4,
-  },
-  section: {
-    padding: 15,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.gray[800],
-    marginBottom: 10,
-  },
-  borrowedCard: {
-    backgroundColor: COLORS.white,
+  searchContainer: {
+    backgroundColor: '#fff',
+    margin: 15,
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-  },
-  borrowedTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.gray[800],
-  },
-  dueDate: {
-    fontSize: 13,
-    color: COLORS.gray[600],
-    marginTop: 4,
-  },
-  status: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: COLORS.success + '20',
-    borderRadius: 4,
-  },
-  overdue: {
-    backgroundColor: COLORS.error + '20',
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: COLORS.success,
-  },
-  searchSection: {
-    padding: 15,
-    backgroundColor: COLORS.white,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   searchInput: {
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: COLORS.gray[50],
+    flex: 1,
+    padding: 15,
+    fontSize: 16,
   },
-  booksSection: {
+  searchIcon: {
+    marginRight: 15,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 15,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  listContainer: {
     padding: 15,
   },
   bookCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 10,
+    backgroundColor: '#fff',
     padding: 15,
+    borderRadius: 12,
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   bookInfo: {
     flex: 1,
   },
   bookTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    color: COLORS.gray[800],
+    color: '#333',
   },
-  author: {
-    fontSize: 12,
-    color: COLORS.gray[600],
-    marginTop: 4,
-  },
-  isbn: {
-    fontSize: 11,
-    color: COLORS.gray[400],
+  bookAuthor: {
+    fontSize: 13,
+    color: '#666',
     marginTop: 2,
   },
   bookMeta: {
     flexDirection: 'row',
-    marginTop: 8,
-    gap: 10,
+    alignItems: 'center',
+    marginTop: 5,
   },
-  category: {
-    fontSize: 11,
-    color: COLORS.primary,
-  },
-  available: {
-    fontSize: 11,
-    color: COLORS.success,
-  },
-  unavailable: {
-    color: COLORS.error,
-  },
-  borrowButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: COLORS.primary,
-    borderRadius: 6,
-    alignSelf: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: COLORS.gray[300],
-  },
-  borrowText: {
-    color: COLORS.white,
-    fontWeight: '600',
+  bookMetaText: {
     fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  availabilityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  availabilityText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 15,
   },
 });

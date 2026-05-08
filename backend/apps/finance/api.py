@@ -195,22 +195,39 @@ def generate_invoices(request, data: dict):
 # === Payment APIs ===
 @router.post('/payments/initialize', response=dict)
 def initialize_payment(request, data: dict):
-    """Initialize payment with gateway."""
+    """Initialize payment with idempotency support."""
+    from django.db import transaction
     from apps.institution.models import Settings
     
     settings = Settings.get_instance()
     student_id = data.get('student_id')
     amount = data.get('amount')
     fee_item_ids = data.get('fee_item_ids', [])
+    idempotency_key = data.get('idempotency_key')  # Optional idempotency key
     
-    # Create payment record
-    payment_ref = f"PN{uuid.uuid4().hex[:12].upper()}"
-    payment = Payment.objects.create(
-        student_id=student_id,
-        amount=amount,
-        payment_ref=payment_ref,
-        gateway=settings.payment_gateway
-    )
+    with transaction.atomic():
+        # Check for duplicate payment using idempotency key
+        if idempotency_key:
+            existing = Payment.objects.filter(
+                idempotency_key=idempotency_key
+            ).first()
+            if existing:
+                return {
+                    'success': True,
+                    'payment_ref': existing.payment_ref,
+                    'amount': float(existing.amount),
+                    'duplicate': True
+                }
+        
+        # Generate unique payment reference
+        payment_ref = f"PN{uuid.uuid4().hex[:12].upper()}"
+        payment = Payment.objects.create(
+            student_id=student_id,
+            amount=amount,
+            payment_ref=payment_ref,
+            gateway=settings.payment_gateway,
+            idempotency_key=idempotency_key
+        )
     
     # Generate payment link based on gateway
     if settings.payment_gateway == 'paystack':

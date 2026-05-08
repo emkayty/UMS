@@ -82,3 +82,45 @@ def ready(request):
 def live(request):
     """Liveness check - returns 200 if app is running."""
     return JsonResponse({'alive': True})
+
+
+# ============================================================
+# PROMETHEUS METRICS
+# ============================================================
+from django.http import HttpResponse
+
+
+def metrics(request):
+    """Prometheus metrics endpoint for monitoring."""
+    from django.db import connection
+    from django.core.cache import cache
+    
+    metrics_lines = []
+    
+    # Database connection check
+    try:
+        connection.ensure_connection()
+        db_status = 1
+    except:
+        db_status = 0
+    
+    metrics_lines.append(f'ums_database_up {db_status}')
+    
+    # Cache check
+    try:
+        cache.set('metrics_health', 'ok', 10)
+        if cache.get('metrics_health') == 'ok':
+            cache_status = 1
+        else:
+            cache_status = 0
+    except:
+        cache_status = 0
+    
+    metrics_lines.append(f'ums_cache_up {cache_status}')
+    
+    # Django info metrics
+    metrics_lines.append('ums_info{version="2.0.0"} 1')
+    
+    # Generate plain text format for Prometheus
+    response = HttpResponse('\n'.join(metrics_lines), content_type='text/plain; charset=utf-8')
+    return response

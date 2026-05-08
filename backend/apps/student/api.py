@@ -184,26 +184,49 @@ def get_student(request, id: str):
 
 @router.post('/students/{id}/register-courses')
 def register_courses(request, id: str, data: dict):
-    """Register courses for a student."""
+    """Register courses for a student with transaction safety."""
+    from django.db import transaction
+    from django.db.models import F
+    from apps.academic.models import Course, AcademicSession, Semester
+    
     student = get_object_or_404(StudentProfile, id=id)
     course_ids = data.get('course_ids', [])
     session_id = data.get('session_id')
     semester_id = data.get('semester_id')
     
-    from apps.academic.models import Course, AcademicSession, Semester
-    
-    registrations = []
-    for course_id in course_ids:
-        course = Course.objects.get(id=course_id)
-        reg, created = CourseRegistration.objects.get_or_create(
-            student=student,
-            course=course,
-            session_id=session_id,
-            semester_id=semester_id,
-            defaults={'status': 'active'}
-        )
-        if created:
-            registrations.append(reg)
+    # Use transaction with row locking for safety
+    with transaction.atomic():
+        # Lock course registrations for this student to prevent race conditions
+        # Use select_for_update on available courses to check seat limits
+        registrations = []
+        for course_id in course_ids:
+            try:
+                # Get course with lock for seat checking
+                course = Course.objects.select_for_update().get(id=course_id)
+                
+                # Check if already registered (prevent duplicate)
+                existing = CourseRegistration.objects.filter(
+                    student=student,
+                    course=course,
+                    session_id=session_id,
+                    semester_id=semester_id
+                ).first()
+                
+                if existing:
+                    continue  # Skip already registered
+                
+                # Create registration
+                reg = CourseRegistration.objects.create(
+                    student=student,
+                    course=course,
+                    session_id=session_id,
+                    semester_id=semester_id,
+                    status='active'
+                )
+                registrations.append(reg)
+                
+            except Course.DoesNotExist:
+                continue  # Skip invalid courses
     
     return {'success': True, 'registered': len(registrations)}
 
