@@ -70,11 +70,15 @@ api.add_router('/academic/', additional_router)
 # Core unified
 from apps.core.api import router as core_router
 from apps.core.enterprise_api import router as enterprise_router
+from apps.core.ai_api import router as ai_router
 
 api.add_router('/core/', core_router)
 
 # Enterprise
 api.add_router('/enterprise/', enterprise_router)
+
+# AI/ML endpoints (v2)
+api.add_router('/ai/v2/', ai_router)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
