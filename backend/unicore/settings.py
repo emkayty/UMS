@@ -75,6 +75,10 @@ MIDDLEWARE = [
     'unicore.middleware.APIVersionMiddleware',
     'unicore.middleware.RequestLoggingMiddleware',
     'unicore.middleware.RateLimitMiddleware',
+    # NEW: Security middleware
+    'utils.security_middleware.SessionExpiryMiddleware',
+    'utils.security_middleware.TenantContextMiddleware',
+    'utils.security_middleware.JWTTokenExpiryMiddleware',
 ]
 
 ROOT_URLCONF = 'unicore.urls'
