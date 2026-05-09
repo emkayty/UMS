@@ -1,6 +1,6 @@
 /**
  * Dashboard Screen
- * Main dashboard with stats and quick actions - API integrated
+ * Main dashboard with stats and quick actions - API integrated with offline support
  */
 
 import React, { useEffect, useState } from 'react';
@@ -15,45 +15,49 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config';
 import { authApi, studentApi } from '../services/api';
+import { useOfflineData, useNetworkStatus } from '../hooks/useOfflineData';
 
 interface Props {
   navigation: any;
 }
 
 export function DashboardScreen({ navigation }: Props) {
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  
+  // Network status with pending count
+  const { online, hasPending } = useNetworkStatus();
+  
+  // Offline-aware data fetching
+  const { 
+    data: userData, 
+    loading: userLoading, 
+    error: userError,
+    isCached: userCached,
+    refetch: refetchUser 
+  } = useOfflineData(
+    () => authApi.me(),
+    { cacheKey: 'user', cacheTTL: 5 * 60 * 1000 }
+  );
+  
+  const { 
+    data: profileData, 
+    loading: profileLoading,
+    error: profileError,
+    isCached: profileCached,
+    refetch: refetchProfile
+  } = useOfflineData(
+    () => studentApi.profile(),
+    { cacheKey: 'profile', cacheTTL: 5 * 60 * 1000 }
+  );
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  const loading = userLoading || profileLoading;
+  const user = userData;
+  const profile = profileData;
 
-  const loadDashboard = async () => {
-    try {
-      // Load user info
-      const userRes = await authApi.me();
-      if (userRes.success) {
-        setUser(userRes.data);
-      }
-
-      // Load student profile
-      const profileRes = await studentApi.profile();
-      if (profileRes.success) {
-        setProfile(profileRes.data);
-      }
-    } catch (error) {
-      console.error('Load error:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    loadDashboard();
+    await Promise.all([refetchUser(), refetchProfile()]);
+    setRefreshing(false);
   };
 
   // Stats from profile data
@@ -74,7 +78,7 @@ export function DashboardScreen({ navigation }: Props) {
     { label: 'Hostel', icon: 'home', screen: 'Hostel', color: '#f97316' },
   ];
 
-  if (loading) {
+  if (loading && !user && !profile) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Loading...</Text>

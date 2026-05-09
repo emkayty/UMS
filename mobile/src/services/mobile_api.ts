@@ -380,7 +380,7 @@ export const hostelApi = {
 };
 
 // ============================================================
-// HELPERS
+// HELPERS - Secure Token & Offline Support
 // ============================================================
 
 async function getToken(): Promise<string | null> {
@@ -392,7 +392,150 @@ async function getToken(): Promise<string | null> {
   }
 }
 
-// Export all APIs
+// ============================================================
+// API CLIENT WITH OFFLINE SUPPORT
+// ============================================================
+
+interface APIRequestConfig {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  body?: object;
+  headers?: Record<string, string>;
+  useOfflineQueue?: boolean;  // Queue request if offline
+  useCache?: boolean;     // Use cached response if available
+  cacheTTL?: number;     // Cache TTL in ms (default 5 min)
+  retries?: number;    // Max retries (default 3)
+  retryDelay?: number;  // Delay between retries (default 1000ms)
+}
+
+interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  cached?: boolean;
+}
+
+// Create API client with offline support
+export function createAPIClient(baseURL: string, prefix: string) {
+  return {
+    async request<T = any>(
+      endpoint: string,
+      config: APIRequestConfig = {}
+    ): Promise<APIResponse<T>> {
+      const {
+        method = 'GET',
+        body,
+        headers = {},
+        useOfflineQueue = false,
+        useCache = false,
+        cacheTTL = 300000,  // 5 min
+        retries = 3,
+        retryDelay = 1000,
+      } = config;
+
+      const url = `${baseURL}${prefix}${endpoint}`;
+      const token = await getToken();
+      
+      // Add auth header if available
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      headers['Content-Type'] = 'application/json';
+
+      // Check cache for GET requests
+      if (useCache && method === 'GET') {
+        const { getCache: getCached } = await import('./storage');
+        const cached = await getCached(endpoint);
+        if (cached) {
+          return { success: true, data: cached, cached: true };
+        }
+      }
+
+      // Try online request with retries
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const response = await fetch(url, {
+            method,
+            body: body ? JSON.stringify(body) : undefined,
+            headers,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Cache successful GET responses
+            if (useCache && method === 'GET') {
+              const { setCache: setCached } = await import('./storage');
+              await setCached(endpoint, data, cacheTTL);
+            }
+            
+            return { success: true, data };
+          }
+          
+          // Handle 401 - token expired
+          if (response.status === 401) {
+            // TODO: Implement token refresh
+            return { success: false, error: 'Session expired' };
+          }
+          
+          const errorData = await response.json().catch(() => ({}));
+          return { success: false, error: errorData.error || 'Request failed' };
+        } catch (e) {
+          lastError = e as Error;
+          
+          // Check if offline
+          const { isOnline } = await import('./storage');
+          const online = await isOnline();
+          
+          if (!online) {
+            // Queue for offline if enabled
+            if (useOfflineQueue && method !== 'GET') {
+              const { queueOfflineRequest } = await import('./storage');
+              await queueOfflineRequest({
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                method,
+                url: endpoint,
+                data: body,
+                timestamp: Date.now(),
+              });
+              return { success: false, error: 'queued' };
+            }
+            return { success: false, error: 'No internet connection' };
+          }
+          
+          // Wait before retry
+          if (attempt < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay * (attempt + 1));
+          }
+        }
+      }
+
+      return { success: false, error: lastError?.message || 'Request failed' };
+    },
+
+    // Convenience methods
+    get<T = any>(endpoint: string, config?: APIRequestConfig): Promise<APIResponse<T>> {
+      return this.request<T>(endpoint, { ...config, method: 'GET' });
+    },
+    post<T = any>(endpoint: string, body: object, config?: APIRequestConfig): Promise<APIResponse<T>> {
+      return this.request<T>(endpoint, { ...config, method: 'POST', body });
+    },
+    put<T = any>(endpoint: string, body: object, config?: APIRequestConfig): Promise<APIResponse<T>> {
+      return this.request<T>(endpoint, { ...config, method: 'PUT', body });
+    },
+    patch<T = any>(endpoint: string, body: object, config?: APIRequestConfig): Promise<APIResponse<T>> {
+      return this.request<T>(endpoint, { ...config, method: 'PATCH', body });
+    },
+    delete<T = any>(endpoint: string, config?: APIRequestConfig): Promise<APIResponse<T>> {
+      return this.request<T>(endpoint, { ...config, method: 'DELETE' });
+    },
+  };
+}
+
+// Create the API client instance
+export const api = createAPIClient(BASE_URL, API_PREFIX);
+
+// Export all APIs with offline support
 export default {
   auth: authApi,
   student: studentApi,
@@ -400,4 +543,5 @@ export default {
   staff: staffApi,
   learning: learningApi,
   hostel: hostelApi,
+  client: api,
 };
